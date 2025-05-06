@@ -1,0 +1,68 @@
+├── app/                        # Next.js App Router structure
+│   ├── layout.tsx              # Root layout with auth provider
+│   ├── page.tsx                # Landing page
+│   ├── generator/              # Main generator screen
+│   │   └── page.tsx            # Generator interface
+│   ├── schema/                 # Schema management screens
+│   │   ├── new/                # Create new schema
+│   │   │   └── page.tsx        # New schema form
+│   │   └── [id]/edit/          # Edit existing schema
+│   │       └── page.tsx        # Edit schema form
+│   ├── saved/                  # Saved schemas listing
+│   │   └── page.tsx            # Schema browsing interface (client component)
+│   ├── api/                    # API Routes
+│   │   ├── auth/[...nextauth]/ # Authentication endpoints
+│   │   │   └── route.ts        # NextAuth routes
+│   │   ├── generate/           # Mock data generation endpoint
+│   │   │   └── route.ts        # Generator API
+│   │   ├── schemas/            # CRUD for saved schemas
+│   │   │   ├── route.ts        # List/create schemas
+│   │   │   └── [id]/           # Individual schema operations
+│   │   │       └── route.ts    # Get/update/delete schema
+│   │   └── user/               # User account endpoints
+│   │       └── route.ts        # User profile/preferences
+│   └── settings/               # User settings
+│       └── page.tsx            # Settings interface
+│
+├── components/                 # React components
+│   ├── ui/                     # Shadcn UI components
+│   │   ├── button.tsx          # Button component
+│   │   ├── card.tsx            # Card component
+│   │   ├── dialog.tsx          # Dialog component
+│   │   ├── input.tsx           # Input component
+│   │   ├── textarea.tsx        # Textarea component
+│   │   ├── toast.tsx           # Toast component
+│   │   ├── toaster.tsx         # Toaster component
+│   │   ├── use-toast.ts        # Toast hook
+│   │   └── ... other UI components
+│   ├── layout/                 # Layout components
+│   │   ├── navbar.tsx          # Navigation bar
+│   │   ├── auth-buttons.tsx    # Authentication UI
+│   │   └── session-provider.tsx # NextAuth session provider
+│   ├── generator/              # Generator-specific components
+│   │   ├── schema-editor.tsx   # Schema editing interface
+│   │   ├── config-panel.tsx    # Generator configuration
+│   │   ├── save-schema-dialog.tsx # Save schema dialog
+│   │   └── delete-schema-button.tsx # Delete schema button
+│   └── results/                # Result-related components
+│       └── results-viewer.tsx  # Display generated data
+│
+├── lib/                        # Utility functions
+│   ├── auth.ts                 # Auth utility functions
+│   ├── openai.ts               # OpenAI API integration
+│   ├── storage.ts              # Vercel KV/Edge Config helpers
+│   ├── mock-storage.ts         # Mock storage for development
+│   ├── sql-parser.ts           # SQL schema parsing
+│   ├── rate-limit.ts           # Rate limiting implementation
+│   └── utils.ts                # General utility functions
+│
+├── types/                      # TypeScript type definitions
+│   └── next-auth.d.ts          # NextAuth type extensions
+│
+├── middleware.ts               # Next.js middleware (auth, rate limiting)
+├── tailwind.config.js          # Tailwind CSS configuration
+├── next.config.js              # Next.js configuration
+├── .env.local                  # Environment variables
+├── .gitignore                  # Git ignore file
+├── package.json                # Project dependencies
+└── README.md                   # Project documentation
