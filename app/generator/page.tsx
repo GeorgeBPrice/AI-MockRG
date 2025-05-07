@@ -21,12 +21,13 @@ import { SaveSchemaDialog } from "@/components/generator/save-schema-dialog";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FileText, Code, Loader2, Zap, Save } from "lucide-react";
 import { UserAiSettings } from "@/lib/storage";
+import { DailyLimitInfo } from "@/components/ui/DailyLimitInfo";
 
 function GeneratorPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const schemaId = searchParams.get("schema");
+  const schemaId = searchParams?.get("schema");
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -85,6 +86,9 @@ function GeneratorPageContent() {
   const [loadedInstructions, setLoadedInstructions] = useState<string | null>(null);
   const [tempInstructions, setTempInstructions] = useState("");
 
+  // Reference to DailyLimitInfo component
+  const dailyLimitRef = useRef<{ refreshUsage: () => Promise<void> } | null>(null);
+
   // Load saved schema if schemaId is provided in URL
   useEffect(() => {
     const loadSavedSchema = async () => {
@@ -93,8 +97,8 @@ function GeneratorPageContent() {
 
         // Handle "new" schema with data passed in URL
         if (schemaId === "new") {
-          const typeParam = searchParams.get("type");
-          const dataParam = searchParams.get("data");
+          const typeParam = searchParams?.get("type");
+          const dataParam = searchParams?.get("data");
 
           if (typeParam && (typeParam === "sql" || typeParam === "nosql")) {
             setSchemaType(typeParam);
@@ -204,7 +208,6 @@ function GeneratorPageContent() {
 
   const handleGenerate = async () => {
     try {
-      
       setIsGenerating(true);
       setResults("");
       
@@ -229,6 +232,39 @@ function GeneratorPageContent() {
         });
         setIsGenerating(false);
         return;
+      }
+      
+      // Check if using own API key before proceeding
+      const isUsingOwnApiKey = hasOwnApiKey();
+      
+      // If not using own API key, check daily limit
+      if (!isUsingOwnApiKey) {
+        try {
+          // Call usage increment endpoint to check and increment limit
+          const limitResponse = await fetch('/api/usage/increment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              usesOwnApiKey: isUsingOwnApiKey
+            }),
+          });
+          
+          // If hit limit, show error and stop
+          if (!limitResponse.ok) {
+            toast({
+              title: "Daily Limit Reached",
+              description: "You have reached your free daily generation limit. Wait for reset or use your own API key.",
+              variant: "destructive",
+            });
+            setIsGenerating(false);
+            return;
+          }
+        } catch (limitError) {
+          console.error("Error checking daily limit:", limitError);
+          // Continue with generation if limit check fails (fail open)
+        }
       }
 
       // TODO: fix this linting error
@@ -320,6 +356,11 @@ function GeneratorPageContent() {
     
         const data = await response.json();
         setResults(data.result);
+        
+        // After successful generation, refresh the usage counter
+        if (!isUsingOwnApiKey && dailyLimitRef.current) {
+          await dailyLimitRef.current.refreshUsage();
+        }
         
         if (data.warnings && data.warnings.length > 0) {
           toast({
@@ -430,6 +471,12 @@ function GeneratorPageContent() {
     }
   };
 
+  // Add a function to check if user has their own API key
+  const hasOwnApiKey = (): boolean => {
+    if (!useUserSettings) return !!tempApiKey;
+    return !!(userSettings?.apiKey);
+  };
+
   // show loading indicator
   if (isLoading && schemaId) {
     return (
@@ -447,7 +494,7 @@ function GeneratorPageContent() {
         <div className="flex-1 flex">
           <ConfigPanel
             stepNumber={1}
-            title="Step 1: Configure"
+            title="Configure Record Generation"
             schemaType={schemaType}
             setSchemaType={handleSchemaTypeChange}
             recordsCount={recordCount}
@@ -550,15 +597,21 @@ function GeneratorPageContent() {
               )}
             </CardContent>
             <CardFooter className="text-sm text-muted-foreground border-t pt-4 mt-4">
-            <p>
-              By using this service, you agree to our{" "}
-              <a href="/terms" className="text-primary hover:underline">
-                Terms of Use
-              </a>
-              . You are responsible for all content generated and any API charges 
-              incurred when using this service with your own API key.
-            </p>
-          </CardFooter>
+              <div className="space-y-3 w-full">
+                <p>
+                  By using this service, you agree to our{" "}
+                  <a href="/terms" className="text-primary hover:underline">
+                    Terms of Use
+                  </a>
+                  . You are responsible for all content generated and any API charges 
+                  incurred when using this service with your own API key.
+                </p>
+                <DailyLimitInfo 
+                  hasOwnApiKey={hasOwnApiKey()} 
+                  ref={dailyLimitRef}
+                />
+              </div>
+            </CardFooter>
             <div className="p-6 pt-0 pb-1 flex items-center justify-start gap-2">
               <Button
                 onClick={handleGenerate}

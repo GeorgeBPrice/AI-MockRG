@@ -18,6 +18,7 @@ import { UserAiSettings } from "@/lib/storage";
 import { FileWarning, Loader2, Settings, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import { DailyLimitInfo } from "@/components/ui/DailyLimitInfo";
 import {
   Dialog,
   DialogContent,
@@ -535,14 +536,18 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Account Information</CardTitle>
-            <CardDescription>Your current account details</CardDescription>
+            <CardDescription>
+              Your current account details
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {session?.user ? (
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <p className="font-medium">Name:</p>
-                  <p>{session.user.name || "Not provided"}</p>
+                  <div className="font-medium text-foreground">
+                    {session.user.name || "Not available"}
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <p className="font-medium">Email:</p>
@@ -562,6 +567,16 @@ export default function SettingsPage() {
                   >
                     Delete API Settings
                   </Button>
+                </div>
+                <div className="space-y-2 mt-6 pt-6 border-t">
+x                  <DailyLimitInfo 
+                    hasOwnApiKey={!!aiSettings.apiKey} 
+                    variant="detailed" 
+                    className="mt-2" 
+                  />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Free users are limited to 5 generations per day. Add your own API key above to bypass this limit.
+                  </p>
                 </div>
               </div>
             ) : (

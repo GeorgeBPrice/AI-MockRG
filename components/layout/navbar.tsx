@@ -18,12 +18,12 @@ export default function Navbar() {
       icon: <Database className="h-4 w-4 mr-2" />,
     },
     {
-      name: "Saved",
+      name: "Saved Schemas",
       href: "/saved",
       icon: <Save className="h-4 w-4 mr-2" />,
     },
     {
-      name: "Settings",
+      name: "API Settings",
       href: "/settings",
       icon: <Settings className="h-4 w-4 mr-2" />,
     },
@@ -50,7 +50,7 @@ export default function Navbar() {
             {navItems.map((item) => (
               <Button
                 key={item.href}
-                variant={pathname === item.href || pathname.startsWith(item.href + '/') ? "default" : "ghost"}
+                variant={pathname === item.href || pathname?.startsWith(item.href + '/') ? "default" : "ghost"}
                 size="sm"
                 asChild
               >
@@ -71,7 +71,7 @@ export default function Navbar() {
           {navItems.map((item) => (
             <Button
               key={item.href}
-              variant={pathname === item.href || pathname.startsWith(item.href + '/') ? "default" : "ghost"}
+              variant={pathname === item.href || pathname?.startsWith(item.href + '/') ? "default" : "ghost"}
               size="sm"
               asChild
               className="flex-1"
