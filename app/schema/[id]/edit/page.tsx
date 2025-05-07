@@ -36,7 +36,7 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
   const [additionalInstructions, setAdditionalInstructions] = useState("");
 
   const fetchSchema = useCallback(async () => {
-    if (status === 'authenticated' && schemaId) {
+    if (status === "authenticated" && schemaId) {
       setIsLoading(true);
       try {
         const response = await fetch(`/api/schemas/${schemaId}`);
@@ -48,7 +48,9 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
             throw new Error("Unauthorized to view this schema.");
           } else {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Failed to load schema: ${response.statusText}`);
+            throw new Error(
+              errorData.error || `Failed to load schema: ${response.statusText}`
+            );
           }
         }
         const data = await response.json();
@@ -63,21 +65,29 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
         }
       } catch (error) {
         console.error(`Error loading schema:`, error);
-        toast({ title: "Load Failed", description: (error as Error).message, variant: "destructive" });
+        toast({
+          title: "Load Failed",
+          description: (error as Error).message,
+          variant: "destructive",
+        });
         router.push("/saved");
       } finally {
         setIsLoading(false);
       }
-    } else if (status === 'unauthenticated') {
+    } else if (status === "unauthenticated") {
       signIn();
     } else {
       if (!schemaId) {
-        toast({ title: "Error", description: "Schema ID not found.", variant: "destructive" });
+        toast({
+          title: "Error",
+          description: "Schema ID not found.",
+          variant: "destructive",
+        });
         router.push("/saved");
       }
-      if (status !== 'loading') setIsLoading(false);
+      if (status !== "loading") setIsLoading(false);
     }
-  }, [schemaId, status, router, toast]);
+  }, [schemaId, status, router]);
 
   useEffect(() => {
     fetchSchema();
@@ -85,7 +95,11 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
 
   const handleSave = async () => {
     if (status !== "authenticated" || !session?.user?.id) {
-      toast({ title: "Error", description: "You must be logged in to save.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "You must be logged in to save.",
+        variant: "destructive",
+      });
       return;
     }
     if (!name.trim()) {
@@ -109,12 +123,14 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
           schema,
           schemaType,
           additionalInstructions: additionalInstructions || undefined,
-        })
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to update: ${response.statusText}`);
+        throw new Error(
+          errorData.error || `Failed to update: ${response.statusText}`
+        );
       }
 
       await response.json();
@@ -123,7 +139,11 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
       router.push("/saved");
     } catch (error) {
       console.error(`Error saving schema:`, error);
-      toast({ title: "Save Failed", description: (error as Error).message, variant: "destructive" });
+      toast({
+        title: "Save Failed",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -150,7 +170,9 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {isSaving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : null}
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
@@ -159,9 +181,7 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
       <Card>
         <CardHeader>
           <CardTitle>Schema Details</CardTitle>
-          <CardDescription>
-            Basic information about your schema
-          </CardDescription>
+          <CardDescription>Basic information about your schema</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -185,7 +205,9 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="additionalInstructions">Additional Instructions (Optional)</Label>
+            <Label htmlFor="additionalInstructions">
+              Additional Instructions (Optional)
+            </Label>
             <Textarea
               id="additionalInstructions"
               placeholder="e.g., Generate names suitable for a fantasy setting..."
@@ -194,7 +216,8 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
               onChange={(e) => setAdditionalInstructions(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Specific instructions for the AI when generating data based on this schema.
+              Specific instructions for the AI when generating data based on
+              this schema.
             </p>
           </div>
         </CardContent>
@@ -208,11 +231,7 @@ export default function SchemaEditPage({ params }: SchemaEditPageProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <SchemaEditor
-            value={schema}
-            onChange={setSchema}
-            type={schemaType}
-          />
+          <SchemaEditor value={schema} onChange={setSchema} type={schemaType} />
         </CardContent>
         <CardFooter className="flex justify-between">
           <div className="flex space-x-2">

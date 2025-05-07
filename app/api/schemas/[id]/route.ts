@@ -1,7 +1,13 @@
+// Modified route.ts file with Promise params
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { getSchema, updateSchema, deleteSchema, SavedSchema } from "@/lib/storage";
+import {
+  getSchema,
+  updateSchema,
+  deleteSchema,
+  SavedSchema,
+} from "@/lib/storage";
 import { z } from "zod";
 
 const schemaUpdateSchema = z.object({
@@ -14,12 +20,15 @@ const schemaUpdateSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   const schemaId = resolvedParams.id;
   if (!schemaId) {
-    return NextResponse.json({ error: "Schema ID is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Schema ID is required" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -30,7 +39,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = session.user.id;
-    
+
     const schema = await getSchema(userId, schemaId);
 
     if (!schema) {
@@ -49,12 +58,15 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   const schemaId = resolvedParams.id;
   if (!schemaId) {
-    return NextResponse.json({ error: "Schema ID is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Schema ID is required" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -78,21 +90,32 @@ export async function PATCH(
     }
 
     // Filter out undefined values before passing to updateSchema
-    const updates: Partial<Omit<SavedSchema, "id" | "createdAt" | "updatedAt" | "userId">> = {};
+    const updates: Partial<
+      Omit<SavedSchema, "id" | "createdAt" | "updatedAt" | "userId">
+    > = {};
     if (result.data.name !== undefined) updates.name = result.data.name;
-    if (result.data.description !== undefined) updates.description = result.data.description;
+    if (result.data.description !== undefined)
+      updates.description = result.data.description;
     if (result.data.schema !== undefined) updates.schema = result.data.schema;
-    if (result.data.schemaType !== undefined) updates.schemaType = result.data.schemaType;
-    if (result.data.additionalInstructions !== undefined) updates.additionalInstructions = result.data.additionalInstructions;
+    if (result.data.schemaType !== undefined)
+      updates.schemaType = result.data.schemaType;
+    if (result.data.additionalInstructions !== undefined)
+      updates.additionalInstructions = result.data.additionalInstructions;
 
     if (Object.keys(updates).length === 0) {
-        return NextResponse.json({ error: "No valid fields provided for update" }, { status: 400 });
+      return NextResponse.json(
+        { error: "No valid fields provided for update" },
+        { status: 400 }
+      );
     }
 
     const updatedSchema = await updateSchema(userId, schemaId, updates);
 
     if (!updatedSchema) {
-      return NextResponse.json({ error: "Schema not found or update failed" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Schema not found or update failed" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ schema: updatedSchema });
@@ -107,12 +130,15 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   const schemaId = resolvedParams.id;
   if (!schemaId) {
-    return NextResponse.json({ error: "Schema ID is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Schema ID is required" },
+      { status: 400 }
+    );
   }
 
   try {

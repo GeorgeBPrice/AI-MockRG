@@ -4,15 +4,13 @@ A powerful tool for generating realistic mock data using AI models.
 
 ## Security Enhancement
 
-We've recently implemented a significant security improvement:
-
 **API Keys Stored in Browser's localStorage**
 
 - Your API keys are now stored securely in your browser's localStorage instead of our database
 - Keys are only transmitted to our server during mock data generation requests
 - Keys are never permanently stored on our servers
 - This provides enhanced security by keeping sensitive credentials primarily client-side
-- Note that clearing your browser data will remove your stored API keys
+- Note that clearing your browser, or using the option in settings to delete your data will remove your stored API keys
 
 ## Supported AI Providers
 

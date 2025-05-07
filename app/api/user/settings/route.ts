@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { UserAiSettings } from "@/lib/storage";
 import { z } from "zod";
 
 // We no longer interact with Redis directly, client will handle localStorage

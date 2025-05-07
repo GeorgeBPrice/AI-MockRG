@@ -18,7 +18,7 @@ export default function TermsPage() {
         <CardContent className="prose dark:prose-invert max-w-none">
           <h2 className="text-xl font-semibold mt-4">1. Acceptance of Terms</h2>
           <p>
-            By accessing or using the AI Mocker Mock Record Generator ("Service"), you agree to be bound by these Terms of Use ("Terms"). If you do not agree to these Terms, please do not use the Service.
+            By accessing or using the AI Mocker Mock Record Generator (&quot;Service&quot;), you agree to be bound by these Terms of Use (&quot;Terms&quot;). If you do not agree to these Terms, please do not use the Service.
           </p>
           
           <h2 className="text-xl font-semibold mt-4">2. Description of Service</h2>
@@ -32,7 +32,7 @@ export default function TermsPage() {
           </p>
           <ul className="list-disc pl-8 my-2">
             <li>You are solely responsible for safeguarding your API keys.</li>
-            <li>While we store your API keys in your browser's localStorage and do not permanently store them on our servers, they are transmitted to our servers during generation requests.</li>
+            <li>While we store your API keys in your browsers localStorage and do not permanently store them on our servers, they are transmitted to our servers during generation requests.</li>
             <li>You are responsible for any charges incurred through the use of your API keys with our Service.</li>
             <li>You must comply with all terms of service of the third-party API providers when using their services through our platform.</li>
           </ul>
@@ -60,7 +60,7 @@ export default function TermsPage() {
           
           <h2 className="text-xl font-semibold mt-4">5. Disclaimer of Warranties</h2>
           <p>
-            5.1. THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
+            5.1. THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE,&quot; WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
           </p>
           <p>
             5.2. We do not guarantee that:
@@ -90,7 +90,7 @@ export default function TermsPage() {
             7.1. While we implement reasonable security measures to protect your information, no method of transmission over the Internet or method of electronic storage is 100% secure. We cannot guarantee absolute security.
           </p>
           <p>
-            7.2. We store your API keys in your browser's localStorage, not in our database. However, these keys are transmitted to our servers during generation requests to facilitate API calls to third-party providers.
+            7.2. We store your API keys in your browsers localStorage, not in our database. However, these keys are transmitted to our servers during generation requests to facilitate API calls to third-party providers.
           </p>
           
           <h2 className="text-xl font-semibold mt-4">8. Modifications to Service and Terms</h2>
@@ -98,7 +98,7 @@ export default function TermsPage() {
             8.1. We reserve the right at any time to modify or discontinue, temporarily or permanently, the Service (or any part thereof) with or without notice.
           </p>
           <p>
-            8.2. We reserve the right to change these Terms at any time. Updated Terms will be posted on this page with a revised "Last Updated" date.
+            8.2. We reserve the right to change these Terms at any time. Updated Terms will be posted on this page with a revised &quot;Last Updated&quot; date.
           </p>
           <p>
             8.3. Your continued use of the Service after any changes to the Terms constitutes your acceptance of the new Terms.
