@@ -2,15 +2,14 @@
 
 A powerful tool for generating realistic mock data using AI models.
 
-## Security Enhancement
+## API Key Security Enhancement
 
 **API Keys Stored in Browser's localStorage**
 
-- Your API keys are now stored securely in your browser's localStorage instead of our database
+- Authenticated user's API keys are stored in your browser's localStorage instead of our database
 - Keys are only transmitted to our server during mock data generation requests
-- Keys are never permanently stored on our servers
-- This provides enhanced security by keeping sensitive credentials primarily client-side
-- Note that clearing your browser, or using the option in settings to delete your data will remove your stored API keys
+- Keys are never permanently stored on our servers, and are processed in memmory only
+- Note: clearing your browser, or using the option in settings to delete your data will remove your stored API keys
 
 ## Supported AI Providers
 
@@ -66,6 +65,8 @@ REDIS_UPSTASH_URL_KV_REST_API_TOKEN=your-upstash-rest-api-token
 REDIS_UPSTASH_URL_KV_REST_API_READ_ONLY_TOKEN=your-upstash-read-only-token
 REDIS_UPSTASH_URL_KV_URL=your-upstash-redis-url
 REDIS_UPSTASH_URL_REDIS_URL=your-upstash-redis-url
+REDIS_URL=your_redis_service_url
+VERCEL_OIDC_TOKEN=token_to_connect_to_redis_service
 ```
 
 ## Features
@@ -73,7 +74,8 @@ REDIS_UPSTASH_URL_REDIS_URL=your-upstash-redis-url
 - Generate mock data from SQL or NoSQL schemas
 - Save and manage generator profiles
 - Authentication with GitHub, Google, or email
-- Real-time event tracking using Redis Streams
+- Real-time record generation request tracking using Redis Streams/Upstash
+- Rate limitting of free API record generation requests using Redis
 - Export data in JSON, SQL, or CSV formats
 
 ## Tech Stack
@@ -83,7 +85,8 @@ REDIS_UPSTASH_URL_REDIS_URL=your-upstash-redis-url
 - **API**: Next.js API Routes
 - **Authentication**: NextAuth.js
 - **Storage**: Vercel KV (Upstash Redis) + Edge Config
-- **Deployment**: Vercel (they have a free tier)
+- **Rate Limitting**: Vercel Redis
+- **Deployment**: Vercel (they have a free tier in case you didnt know)
 - **AI Integration**: OpenAI API
 
 ## Getting Started

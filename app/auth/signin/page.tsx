@@ -84,7 +84,7 @@ export default function SignInPage() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: '/' })}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
