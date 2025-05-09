@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { recordGeneration } from "@/lib/storage";
 import { recordGenerationEvent, recordUserActivity } from "@/lib/events";
+import { checkDailyLimit, incrementDailyUsage } from "@/lib/daily-rate-limit";
 // Note: No longer importing getUserAiSettings as we'll use localStorage functionality
 
 /**
@@ -16,6 +17,7 @@ export async function POST(request: NextRequest) {
     // Get user session or default to anonymous
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id || 'anonymous';
+    const userEmail = session?.user?.email || 'anonymous';
     const schemaName = session?.user ? undefined : 'Anonymous Generation';
 
     // Parse request body
@@ -81,6 +83,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Record count must be between 1 and 100" }, { status: 400 });
     }
     
+    // Check if user has hit their daily generation limit
+    const usesOwnApiKey = !!overrideApiKey && useUserSettings;
+    const dailyLimitResult = await checkDailyLimit({
+      identifier: userEmail,
+      usesOwnApiKey
+    });
+
+    // If user has reached their limit, return a 403 Forbidden response
+    if (!dailyLimitResult.success) {
+      return NextResponse.json({
+        error: `Daily rate limit exceeded. You have used all ${dailyLimitResult.limit} of your free generations for today.`,
+        limit: dailyLimitResult.limit,
+        remaining: dailyLimitResult.remaining,
+        resetTimestamp: dailyLimitResult.resetTimestamp
+      }, { status: 403 });
+    }
+    
     // Attempt to validate SQL schema if no examples provided
     if (effectiveSchemaType === "sql" && !examples) {
       try {
@@ -114,6 +133,11 @@ export async function POST(request: NextRequest) {
         maxTokens: finalMaxTokens,
         headers: finalHeaders,
       });
+      
+      // Increment usage counter after successful generation
+      if (!usesOwnApiKey) {
+        await incrementDailyUsage(userEmail);
+      }
     } catch (generateError) {
       success = false;
       errorMessage = (generateError as Error).message;
