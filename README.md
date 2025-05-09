@@ -150,6 +150,38 @@ This application is designed to be deployed on Vercel:
 
 4. Deploy!
 
+## Testing
+
+This project uses Jest and React Testing Library for testing. To run tests:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Generate HTML coverage report
+npm run test:coverage:report
+```
+
+After running the coverage report, you can view detailed results by opening `coverage/lcov-report/index.html` in your browser.
+
+### Coverage Thresholds
+
+The project has configured coverage thresholds to maintain code quality. These thresholds can be adjusted in the `jest.config.js` file.
+
+### Testing Critical Components
+
+To focus testing on rate limiting components only:
+
+```bash
+npm run test:critical
+```
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
