@@ -33,6 +33,10 @@ Configure your generation parameters:
 - Max Tokens: Control response length
 - Custom Headers: Add provider-specific headers
 
+## Homepage Screenshot
+
+![image](https://github.com/user-attachments/assets/c1dd5569-4aa5-46a1-a32a-0295adb893f5)
+
 ## Environment Variables
 
 After setting up Upstash Redis through Vercel, you'll need to add these environment variables to your `.env.local` file:
