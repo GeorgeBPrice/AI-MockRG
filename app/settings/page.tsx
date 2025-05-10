@@ -363,7 +363,8 @@ export default function SettingsPage() {
             <CardDescription>
               <FileWarning className="w-4 h-4 inline-block text-red-400" />
               <span className="text-xs text-red-400 px-1">
-                Your API keys are stored securely in your browser{"'"}s localStorage, not on our servers. This means your keys never leave your device, but will be lost if you clear your browser data.
+                Your API keys are stored securely in your browsers local storage, not on our servers. 
+                Your settings will be lost if you clear your browser data.
               </span>
             </CardDescription>
             <button

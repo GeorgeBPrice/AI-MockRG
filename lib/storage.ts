@@ -9,6 +9,8 @@ export interface SavedSchema {
   schema: string;
   schemaType: "sql" | "nosql";
   additionalInstructions?: string;
+  preferredFormat?: string;
+  preferredRecordCount?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -41,19 +43,15 @@ const isServerEnvironment = () => {
   return isServer;
 };
 
-// Check if Vercel KV environment variables are properly configured
-const kvConfigured = 
-    typeof process !== "undefined" && 
-    (process.env.KV_REST_API_URL || process.env.REDIS_UPSTASH_URL_KV_REST_API_URL) && 
-    !((process.env.KV_REST_API_URL && process.env.KV_REST_API_URL.includes("your-kv")) || 
-       (process.env.REDIS_UPSTASH_URL_KV_REST_API_URL && process.env.REDIS_UPSTASH_URL_KV_REST_API_URL.includes("your-kv"))) && 
-    (process.env.KV_REST_API_TOKEN || process.env.REDIS_UPSTASH_URL_KV_REST_API_TOKEN); // Check for token too
+// Check if Vercel KV client is properly configured and available
+const kvConfigured = typeof kv !== "undefined" && kv !== null && !!Object.keys(kv).length;
 
 // Use mock storage ONLY if KV is NOT configured
 const useMockStorage = !kvConfigured;
 
-if (useMockStorage) {
-    console.warn("Vercel KV environment variables not fully configured. Using mock in-memory storage.");
+// Only warn if we're in a server environment and KV is not configured
+if (useMockStorage && isServerEnvironment()) {
+    console.warn("Vercel KV not available. Using mock in-memory storage.");
 }
 
 // Cross-request persistent storage solution for development
@@ -302,7 +300,9 @@ export async function saveSchema(
         createdAt: now,
         updatedAt: now,
         ...(schema.description ? { description: schema.description } : {}),
-        ...(schema.additionalInstructions ? { additionalInstructions: schema.additionalInstructions } : {})
+        ...(schema.additionalInstructions ? { additionalInstructions: schema.additionalInstructions } : {}),
+        ...(schema.preferredFormat ? { preferredFormat: schema.preferredFormat } : {}),
+        ...(schema.preferredRecordCount ? { preferredRecordCount: schema.preferredRecordCount } : {})
       };
       
       // Clean object for Redis (removes null/undefined)

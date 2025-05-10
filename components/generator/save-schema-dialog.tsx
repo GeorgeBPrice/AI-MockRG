@@ -25,18 +25,29 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { saveSchema } from "@/lib/storage"; // Direct import for fallback
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
   description: z.string().optional(),
+  preferredFormat: z.string().optional(),
+  preferredRecordCount: z.number().min(1).max(100).optional(),
 });
 
 interface SaveSchemaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (name: string, description?: string) => void;
+  onSave: (name: string, description?: string, preferredFormat?: string, preferredRecordCount?: number) => void;
   onSuccess?: (schemaId: string) => void;
   schemaData?: {
     schema: string;
@@ -48,6 +59,8 @@ interface SaveSchemaDialogProps {
   editMode?: boolean;
   schemaId?: string;
   handleApiCall?: boolean;
+  preferredFormat?: string;
+  preferredRecordCount?: number;
 }
 
 export function SaveSchemaDialog({
@@ -62,8 +75,11 @@ export function SaveSchemaDialog({
   editMode = false,
   schemaId = "",
   handleApiCall = true,
+  preferredFormat = "json",
+  preferredRecordCount = 10,
 }: SaveSchemaDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recordCount, setRecordCount] = useState(preferredRecordCount);
 
   // Validate we have a userId and it's not empty
   const effectiveUserId = userId || "test-user-123";
@@ -73,6 +89,8 @@ export function SaveSchemaDialog({
     defaultValues: {
       name: initialName,
       description: initialDescription,
+      preferredFormat: preferredFormat,
+      preferredRecordCount: preferredRecordCount,
     },
   });
 
@@ -82,15 +100,23 @@ export function SaveSchemaDialog({
       form.reset({
         name: initialName,
         description: initialDescription,
+        preferredFormat: preferredFormat,
+        preferredRecordCount: preferredRecordCount,
       });
+      setRecordCount(preferredRecordCount);
     }
-  }, [open, initialName, initialDescription, form]);
+  }, [open, initialName, initialDescription, preferredFormat, preferredRecordCount, form]);
 
   async function handleSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
 
     try {
-      onSave(values.name, values.description || undefined);
+      onSave(
+        values.name, 
+        values.description || undefined, 
+        values.preferredFormat, 
+        values.preferredRecordCount || recordCount
+      );
 
       // Only continue with API calls if user configured them
       if (handleApiCall) {
@@ -105,6 +131,8 @@ export function SaveSchemaDialog({
               body: JSON.stringify({
                 name: values.name,
                 description: values.description || undefined,
+                preferredFormat: values.preferredFormat,
+                preferredRecordCount: values.preferredRecordCount || recordCount,
               }),
             });
 
@@ -135,6 +163,8 @@ export function SaveSchemaDialog({
                 description: values.description || undefined,
                 schema: schemaData.schema,
                 schemaType: schemaData.schemaType,
+                preferredFormat: values.preferredFormat,
+                preferredRecordCount: values.preferredRecordCount || recordCount,
               }),
             });
 
@@ -198,15 +228,21 @@ export function SaveSchemaDialog({
     }
   }
 
+  // Update the form when the record count changes
+  const handleRecordCountChange = (value: number[]) => {
+    setRecordCount(value[0]);
+    form.setValue('preferredRecordCount', value[0]);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
             {editMode ? "Update Schema" : "Save Schema"}
           </DialogTitle>
           <DialogDescription>
-            Give your schema a name and optional description.
+            Give your schema a name and configure optional settings.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -244,6 +280,53 @@ export function SaveSchemaDialog({
                 </FormItem>
               )}
             />
+
+            <div className="space-y-4 pt-2 border-t">
+              <h3 className="text-sm font-medium">Default Generation Settings</h3>
+              
+              <FormField
+                control={form.control}
+                name="preferredFormat"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preferred Output Format</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select output format" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="json">JSON</SelectItem>
+                        <SelectItem value="csv">CSV</SelectItem>
+                        <SelectItem value="xlsx">XLSX</SelectItem>
+                        <SelectItem value="xml">XML</SelectItem>
+                        <SelectItem value="txt">TXT (Tab Separated)</SelectItem>
+                        <SelectItem value="sql">SQL INSERT</SelectItem>
+                        <SelectItem value="html">HTML Table</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-2">
+                <Label htmlFor="record-count" className="text-sm font-medium">
+                  Default Record Count: {recordCount}
+                </Label>
+                <Slider
+                  id="record-count"
+                  min={1}
+                  max={100}
+                  step={1}
+                  value={[recordCount]}
+                  onValueChange={handleRecordCountChange}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
             <DialogFooter>
               <Button
                 type="button"

@@ -29,23 +29,21 @@ export const DailyLimitInfo = forwardRef<DailyLimitInfoRef, DailyLimitInfoProps>
       refreshUsage
     }));
 
-    // Return nothing if loading or has own API key in compact mode
+    // Return loading state if loading
     if (loading) {
       return <div className={`text-sm text-muted-foreground ${className}`}>Loading usage data...</div>;
     }
 
-    if (hasOwnApiKey && variant === 'compact') {
-      return null;
-    }
-
-    // If user has their own API key
+    // If the user is actually using their own API key
     if (hasOwnApiKey) {
       return (
         <div className={`text-sm text-green-600 ${className}`}>
-          Using your own API key - no generation limits apply
+          Using your own API key {variant === 'detailed' && '- no generation limits apply'}
         </div>
       );
     }
+
+    // User is not using their own API key, so show the free generation counter
 
     // Color coding based on remaining uses
     const getStatusColor = () => {
