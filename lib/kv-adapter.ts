@@ -12,9 +12,57 @@ function cleanRestApiUrl(url: string | undefined): string {
   }
 }
 
-const kvClient = createClient({
-  url: cleanRestApiUrl(process.env.REDIS_UPSTASH_URL_KV_REST_API_URL) || '',
-  token: process.env.REDIS_UPSTASH_URL_KV_REST_API_TOKEN || '',
-});
+// Check if we have the required environment variables
+const hasRequiredEnvVars = 
+  typeof process !== 'undefined' && 
+  (process.env.REDIS_UPSTASH_URL_KV_REST_API_URL || process.env.KV_REST_API_URL) && 
+  (process.env.REDIS_UPSTASH_URL_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN);
 
-export { kvClient as kv }; 
+// Create the client only if we have the environment variables
+const kvClient = hasRequiredEnvVars 
+  ? createClient({
+      url: cleanRestApiUrl(process.env.REDIS_UPSTASH_URL_KV_REST_API_URL || process.env.KV_REST_API_URL) || '',
+      token: process.env.REDIS_UPSTASH_URL_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN || '',
+    })
+  : null;
+
+// Export the KV client or a mock implementation if not available
+export const kv = kvClient || {
+  get: async () => null,
+  set: async () => null,
+  del: async () => 0,
+  exists: async () => 0,
+  hgetall: async () => null,
+  hget: async () => null,
+  hset: async () => 0,
+  hdel: async () => 0,
+  sadd: async () => 0,
+  srem: async () => 0,
+  smembers: async () => [],
+  scard: async () => 0,
+  lpush: async () => 0,
+  lpop: async () => null,
+  lrange: async () => [],
+  lrem: async () => 0,
+  ltrim: async () => 'OK',
+  multi: () => ({
+    exec: async () => [],
+    get: () => null,
+    set: () => null,
+    del: () => 0,
+    exists: () => 0,
+    hgetall: () => null,
+    hget: () => null,
+    hset: () => 0,
+    hdel: () => 0,
+    sadd: () => 0,
+    srem: () => 0,
+    smembers: () => [],
+    scard: () => 0,
+    lpush: () => 0,
+    lpop: () => null,
+    lrange: () => [],
+    lrem: () => 0,
+    ltrim: () => 'OK',
+  }),
+}; 

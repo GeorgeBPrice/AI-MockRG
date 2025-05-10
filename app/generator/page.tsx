@@ -235,10 +235,11 @@ function GeneratorPageContent() {
       }
       
       // Check if using own API key before proceeding
-      const isUsingOwnApiKey = hasOwnApiKey();
+      const isUsingOwnApiKey = useUserSettings && !!(userSettings?.apiKey);
       
-      // If not using own API key, check daily limit
-      if (!isUsingOwnApiKey) {
+      // Only non-authenticated users need to increment usage here
+      // For logged-in users, we'll let the API handle it to avoid double-counting
+      if (!isUsingOwnApiKey && status !== 'authenticated') {
         try {
           // Call usage increment endpoint to check and increment limit
           const limitResponse = await fetch('/api/usage/increment', {
@@ -263,6 +264,27 @@ function GeneratorPageContent() {
           }
         } catch (limitError) {
           console.error("Error checking daily limit:", limitError);
+          // Continue with generation if limit check fails (fail open)
+        }
+      } else if (!isUsingOwnApiKey && status === 'authenticated') {
+        // For authenticated users not using their own API key, just check the limit without incrementing
+        try {
+          const response = await fetch('/api/usage/daily');
+          if (response.ok) {
+            const data = await response.json();
+            // The daily endpoint returns {used, limit, remaining} directly, not inside limitInfo
+            if (data && data.remaining <= 0) {
+              toast({
+                title: "Daily Limit Reached",
+                description: "You have reached your free daily generation limit. Wait for reset or use your own API key.",
+                variant: "destructive",
+              });
+              setIsGenerating(false);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error("Error checking daily limit:", error);
           // Continue with generation if limit check fails (fail open)
         }
       }
@@ -357,8 +379,8 @@ function GeneratorPageContent() {
         const data = await response.json();
         setResults(data.result);
         
-        // After successful generation, refresh the usage counter
-        if (!isUsingOwnApiKey && dailyLimitRef.current) {
+        // Always refresh the usage counter after generation
+        if (dailyLimitRef.current) {
           await dailyLimitRef.current.refreshUsage();
         }
         
@@ -469,12 +491,6 @@ function GeneratorPageContent() {
         variant: "destructive",
       });
     }
-  };
-
-  // Add a function to check if user has their own API key
-  const hasOwnApiKey = (): boolean => {
-    if (!useUserSettings) return !!tempApiKey;
-    return !!(userSettings?.apiKey);
   };
 
   // show loading indicator
@@ -607,7 +623,7 @@ function GeneratorPageContent() {
                   incurred when using this service with your own API key.
                 </p>
                 <DailyLimitInfo 
-                  hasOwnApiKey={hasOwnApiKey()} 
+                  hasOwnApiKey={useUserSettings && !!(userSettings?.apiKey)} 
                   ref={dailyLimitRef}
                 />
               </div>
