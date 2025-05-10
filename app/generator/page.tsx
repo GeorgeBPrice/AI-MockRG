@@ -33,14 +33,16 @@ function GeneratorPageContent() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [schema, setSchema] = useState("");
-  const [schemaType, setSchemaType] = useState<"sql" | "nosql" | "sample">("sql");
+  const [schemaType, setSchemaType] = useState<"sql" | "nosql" | "sample">(
+    "sql"
+  );
   const [recordCount, setRecordCount] = useState(10);
   const [format, setFormat] = useState<string>("json");
   const [examples, setExamples] = useState("");
   const [results, setResults] = useState("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"schema" | "examples">("schema");
-  
+
   // swap active tab with schema data type (in step 1 and step 2)
   useEffect(() => {
     if (schemaType === "sample" && activeTab !== "examples") {
@@ -49,7 +51,7 @@ function GeneratorPageContent() {
       setActiveTab("schema");
     }
   }, [schemaType, activeTab]);
-  
+
   const handleSchemaTypeChange = (type: "sql" | "nosql" | "sample") => {
     setSchemaType(type);
     if (type === "sample") {
@@ -58,7 +60,7 @@ function GeneratorPageContent() {
       setActiveTab("schema");
     }
   };
-  
+
   // Handle tab changes from the tabs component
   const handleTabChange = (value: string) => {
     const tab = value as "schema" | "examples";
@@ -79,15 +81,20 @@ function GeneratorPageContent() {
   const [tempMaxTokens, setTempMaxTokens] = useState(4000);
   const [tempHeaders, setTempHeaders] = useState<Record<string, string>>({});
   const [useUserSettings, setUseUserSettings] = useState(true);
-  const [userSettings, setUserSettings] = useState<Partial<UserAiSettings> | null>(null);
+  const [userSettings, setUserSettings] =
+    useState<Partial<UserAiSettings> | null>(null);
 
   // State for schema name and loaded instructions
   const [schemaName, setSchemaName] = useState<string | null>(null);
-  const [loadedInstructions, setLoadedInstructions] = useState<string | null>(null);
+  const [loadedInstructions, setLoadedInstructions] = useState<string | null>(
+    null
+  );
   const [tempInstructions, setTempInstructions] = useState("");
 
   // Reference to DailyLimitInfo component
-  const dailyLimitRef = useRef<{ refreshUsage: () => Promise<void> } | null>(null);
+  const dailyLimitRef = useRef<{ refreshUsage: () => Promise<void> } | null>(
+    null
+  );
 
   // Load saved schema if schemaId is provided in URL
   useEffect(() => {
@@ -111,7 +118,7 @@ function GeneratorPageContent() {
               toast({
                 title: "Schema Loaded",
                 description: "Test schema loaded - ready to generate mock data",
-                variant: "success"
+                variant: "success",
               });
             } catch (error) {
               console.error("Error decoding schema data:", error);
@@ -142,16 +149,25 @@ function GeneratorPageContent() {
             setSchemaName(data.schema.name);
             setLoadedInstructions(data.schema.additionalInstructions || null);
             setTempInstructions(data.schema.additionalInstructions || "");
-            
+
+            // Use saved format and record count preferences if available
+            if (data.schema.preferredFormat) {
+              setFormat(data.schema.preferredFormat);
+            }
+
+            if (data.schema.preferredRecordCount) {
+              setRecordCount(data.schema.preferredRecordCount);
+            }
+
             // Only show the toast if not coming from saved page
             toast({
               title: "Schema Loaded",
               description: `Loaded "${
                 data.schema.name || "Unnamed"
               }" schema - ready to generate mock data`,
-              variant: "success"
-              });
-            } else {
+              variant: "success",
+            });
+          } else {
             throw new Error("Schema data not found in API response");
           }
         } catch (apiError) {
@@ -181,28 +197,30 @@ function GeneratorPageContent() {
   // Load user settings when authenticated
   useEffect(() => {
     const fetchUserSettings = async () => {
-      if (status === 'authenticated' && session?.user?.id) {
+      if (status === "authenticated" && session?.user?.id) {
         try {
           // Import and use the localStorage utility instead of fetching from server
-          const { getAiSettingsFromLocal } = await import('@/lib/local-storage');
+          const { getAiSettingsFromLocal } = await import(
+            "@/lib/local-storage"
+          );
           const settings = getAiSettingsFromLocal(session.user.id);
           if (settings) {
             setUserSettings(settings);
           } else {
             // Fallback to API to check if settings exist
-            const response = await fetch('/api/user/settings');
+            const response = await fetch("/api/user/settings");
             if (response.ok) {
               // API now just returns success, it doesn't return actual settings
               // This is just for backward compatibility
-              console.log('Settings should be stored in localStorage');
+              console.log("Settings should be stored in localStorage");
             }
           }
         } catch (error) {
-          console.error('Error loading user settings:', error);
+          console.error("Error loading user settings:", error);
         }
       }
     };
-    
+
     fetchUserSettings();
   }, [status, session?.user?.id]);
 
@@ -210,7 +228,7 @@ function GeneratorPageContent() {
     try {
       setIsGenerating(true);
       setResults("");
-      
+
       // Determine if we're using samples based on schema type
       const usingSamples = schemaType === "sample";
 
@@ -233,30 +251,31 @@ function GeneratorPageContent() {
         setIsGenerating(false);
         return;
       }
-      
+
       // Check if using own API key before proceeding
-      const isUsingOwnApiKey = useUserSettings && !!(userSettings?.apiKey);
-      
+      const isUsingOwnApiKey = useUserSettings && !!userSettings?.apiKey;
+
       // Only non-authenticated users need to increment usage here
       // For logged-in users, we'll let the API handle it to avoid double-counting
-      if (!isUsingOwnApiKey && status !== 'authenticated') {
+      if (!isUsingOwnApiKey && status !== "authenticated") {
         try {
           // Call usage increment endpoint to check and increment limit
-          const limitResponse = await fetch('/api/usage/increment', {
-            method: 'POST',
+          const limitResponse = await fetch("/api/usage/increment", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              usesOwnApiKey: isUsingOwnApiKey
+              usesOwnApiKey: isUsingOwnApiKey,
             }),
           });
-          
+
           // If hit limit, show error and stop
           if (!limitResponse.ok) {
             toast({
               title: "Daily Limit Reached",
-              description: "You have reached your free daily generation limit. Wait for reset or use your own API key.",
+              description:
+                "You have reached your free daily generation limit. Wait for reset or use your own API key.",
               variant: "destructive",
             });
             setIsGenerating(false);
@@ -266,17 +285,18 @@ function GeneratorPageContent() {
           console.error("Error checking daily limit:", limitError);
           // Continue with generation if limit check fails (fail open)
         }
-      } else if (!isUsingOwnApiKey && status === 'authenticated') {
+      } else if (!isUsingOwnApiKey && status === "authenticated") {
         // For authenticated users not using their own API key, just check the limit without incrementing
         try {
-          const response = await fetch('/api/usage/daily');
+          const response = await fetch("/api/usage/daily");
           if (response.ok) {
             const data = await response.json();
             // The daily endpoint returns {used, limit, remaining} directly, not inside limitInfo
             if (data && data.remaining <= 0) {
               toast({
                 title: "Daily Limit Reached",
-                description: "You have reached your free daily generation limit. Wait for reset or use your own API key.",
+                description:
+                  "You have reached your free daily generation limit. Wait for reset or use your own API key.",
                 variant: "destructive",
               });
               setIsGenerating(false);
@@ -292,14 +312,15 @@ function GeneratorPageContent() {
       // TODO: fix this linting error
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const requestBody: any = {
-        schemaType: schemaType === "sample" ? "sql" : schemaType as "sql" | "nosql",
+        schemaType:
+          schemaType === "sample" ? "sql" : (schemaType as "sql" | "nosql"),
         count: recordCount,
         format,
         outputFormat: format,
         additionalInstructions: tempInstructions || undefined,
         schemaName: schemaName === "New Schema" ? undefined : schemaName,
       };
-      
+
       // Only include AI settings if not using user's stored settings
       if (!useUserSettings) {
         if (tempApiKey) requestBody.overrideApiKey = tempApiKey;
@@ -307,21 +328,30 @@ function GeneratorPageContent() {
         if (tempBaseUrl) requestBody.overrideBaseUrl = tempBaseUrl;
         if (tempTemperature) requestBody.overrideTemperature = tempTemperature;
         if (tempMaxTokens) requestBody.overrideMaxTokens = tempMaxTokens;
-        if (tempHeaders && Object.keys(tempHeaders).length > 0) requestBody.overrideHeaders = tempHeaders;
+        if (tempHeaders && Object.keys(tempHeaders).length > 0)
+          requestBody.overrideHeaders = tempHeaders;
       } else {
         // Get settings from localStorage if using user settings
         if (session?.user?.id) {
-          const { getAiSettingsFromLocal } = await import('@/lib/local-storage');
+          const { getAiSettingsFromLocal } = await import(
+            "@/lib/local-storage"
+          );
           const localSettings = getAiSettingsFromLocal(session.user.id);
-          
+
           if (localSettings) {
             // Pass settings directly in the request since server can't access localStorage
-            if (localSettings.apiKey) requestBody.overrideApiKey = localSettings.apiKey;
-            if (localSettings.model) requestBody.overrideModel = localSettings.model;
-            if (localSettings.baseUrl) requestBody.overrideBaseUrl = localSettings.baseUrl;
-            if (localSettings.temperature) requestBody.overrideTemperature = localSettings.temperature;
-            if (localSettings.maxTokens) requestBody.overrideMaxTokens = localSettings.maxTokens;
-            if (localSettings.headers) requestBody.overrideHeaders = localSettings.headers;
+            if (localSettings.apiKey)
+              requestBody.overrideApiKey = localSettings.apiKey;
+            if (localSettings.model)
+              requestBody.overrideModel = localSettings.model;
+            if (localSettings.baseUrl)
+              requestBody.overrideBaseUrl = localSettings.baseUrl;
+            if (localSettings.temperature)
+              requestBody.overrideTemperature = localSettings.temperature;
+            if (localSettings.maxTokens)
+              requestBody.overrideMaxTokens = localSettings.maxTokens;
+            if (localSettings.headers)
+              requestBody.overrideHeaders = localSettings.headers;
           }
         }
         requestBody.useUserSettings = true;
@@ -337,7 +367,7 @@ function GeneratorPageContent() {
           requestBody.examples = examples;
         }
       }
-      
+
       // Make the API call
       try {
         const response = await fetch("/api/generate", {
@@ -345,10 +375,10 @@ function GeneratorPageContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestBody),
         });
-    
+
         if (!response.ok) {
           let errorMsg = `Error ${response.status}: ${response.statusText}`;
-          
+
           try {
             const errorData = await response.json();
             if (errorData && errorData.message) {
@@ -357,33 +387,34 @@ function GeneratorPageContent() {
           } catch (parseError) {
             console.error("Failed to parse error response:", parseError);
           }
-          
+
           toast({
             title: `Generation Failed (${response.status})`,
             description: errorMsg,
             variant: "destructive",
-            action: status === 'authenticated' ? (
-              <Button 
-                variant="link" 
-                className="text-sm underline" 
-                onClick={() => router.push('/dashboard/events')}
-              >
-                View details in dashboard
-              </Button>
-            ) : undefined,
+            action:
+              status === "authenticated" ? (
+                <Button
+                  variant="link"
+                  className="text-sm underline"
+                  onClick={() => router.push("/dashboard/events")}
+                >
+                  View details in dashboard
+                </Button>
+              ) : undefined,
           });
-          
+
           throw new Error(errorMsg);
         }
-    
+
         const data = await response.json();
         setResults(data.result);
-        
+
         // Always refresh the usage counter after generation
         if (dailyLimitRef.current) {
           await dailyLimitRef.current.refreshUsage();
         }
-        
+
         if (data.warnings && data.warnings.length > 0) {
           toast({
             title: "Generation Completed with Warnings",
@@ -394,14 +425,14 @@ function GeneratorPageContent() {
           toast({
             title: "Generation Complete",
             description: `Generated ${recordCount} records.`,
-            variant: "success"
+            variant: "success",
           });
         }
-        
+
         // Scroll to results after successful generation
         setTimeout(() => {
           if (resultsRef.current) {
-            resultsRef.current.scrollIntoView({ behavior: 'smooth' });
+            resultsRef.current.scrollIntoView({ behavior: "smooth" });
           }
         }, 100);
       } catch (apiError) {
@@ -415,15 +446,16 @@ function GeneratorPageContent() {
           title: "Generation Failed",
           description: (error as Error).message,
           variant: "destructive",
-          action: status === 'authenticated' ? (
-            <Button 
-              variant="link" 
-              className="text-sm underline" 
-              onClick={() => router.push('/dashboard/events')}
-            >
-              View details in dashboard
-            </Button>
-          ) : undefined,
+          action:
+            status === "authenticated" ? (
+              <Button
+                variant="link"
+                className="text-sm underline"
+                onClick={() => router.push("/dashboard/events")}
+              >
+                View details in dashboard
+              </Button>
+            ) : undefined,
         });
       }
     } finally {
@@ -431,7 +463,12 @@ function GeneratorPageContent() {
     }
   };
 
-  const handleSave = async (name: string, description?: string) => {
+  const handleSave = async (
+    name: string,
+    description?: string,
+    preferredFormat?: string,
+    preferredRecordCount?: number
+  ) => {
     if (!session) {
       toast({
         title: "Authentication Required",
@@ -440,7 +477,7 @@ function GeneratorPageContent() {
       });
       return;
     }
-    
+
     if (schemaType !== "sample" && !schema.trim()) {
       toast({
         title: "Schema Required",
@@ -449,7 +486,7 @@ function GeneratorPageContent() {
       });
       return;
     }
-    
+
     if (schemaType === "sample" && !examples.trim()) {
       toast({
         title: "Examples Required",
@@ -460,16 +497,23 @@ function GeneratorPageContent() {
     }
 
     try {
-      const response = await fetch("/api/schemas", {
-        method: "POST",
+      // Use PATCH for existing schemas, POST for new ones
+      const method = schemaId ? "PATCH" : "POST";
+      const url = schemaId ? `/api/schemas/${schemaId}` : "/api/schemas";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name, 
-          description, 
-          schema: schemaType !== "sample" ? schema : "/* Generated from examples */",
+        body: JSON.stringify({
+          name,
+          description,
+          schema:
+            schemaType !== "sample" ? schema : "/* Generated from examples */",
           examples: schemaType === "sample" ? examples : undefined,
           schemaType: schemaType === "sample" ? "sql" : schemaType,
           additionalInstructions: tempInstructions || undefined,
+          preferredFormat: preferredFormat || format,
+          preferredRecordCount: preferredRecordCount || recordCount,
         }),
       });
 
@@ -478,11 +522,28 @@ function GeneratorPageContent() {
         throw new Error(errorData.message || "Failed to save schema");
       }
 
+      const data = await response.json();
+
       toast({
-        title: schemaType === "sample" ? "Examples Saved" : "Schema Saved",
-        description: `${schemaType === "sample" ? "Examples" : "Schema"} "${name}" saved successfully.`,
-        variant: "success"
+        title: schemaId
+          ? "Schema Updated"
+          : schemaType === "sample"
+          ? "Examples Saved"
+          : "Schema Saved",
+        description: `${
+          schemaId ? "Updated" : "Saved"
+        } "${name}" successfully.`,
+        variant: "success",
       });
+
+      // Update the current schemaId and name if this was a new schema
+      if (!schemaId && data.schema && data.schema.id) {
+        // Update URL to include the new schema ID without full page reload
+        window.history.pushState({}, "", `/generator?schema=${data.schema.id}`);
+        // Update state variables
+        setSchemaName(name);
+      }
+
       setSaveDialogOpen(false);
     } catch (error) {
       toast({
@@ -544,9 +605,19 @@ function GeneratorPageContent() {
         <div className="flex-1 flex">
           <Card className="flex flex-col h-full w-full">
             <CardHeader className="relative">
-              <div className="absolute top-0 right-0 bg-primary/10 text-primary px-2 py-2 rounded-tr-xl text-xs font-medium" style={{ top: "-24px" }}>
+              <div
+                className="absolute top-0 right-0 bg-primary/10 text-primary px-2 py-2 rounded-tr-xl text-xs font-medium"
+                style={{ top: "-24px" }}
+              >
                 Step 2
               </div>
+              {schemaId && schemaName && (
+                <div className="flex items-center p-2 bg-green-50 dark:bg-green-900/20 rounded-md w-fit">
+                  <div className="text-green-700 dark:text-green-300 text-sm font-medium">
+                    Loaded schema: {schemaName}
+                  </div>
+                </div>
+              )}
               <Tabs
                 value={activeTab}
                 onValueChange={handleTabChange}
@@ -572,9 +643,10 @@ function GeneratorPageContent() {
                       ? "SQL table(s)"
                       : schemaType === "nosql"
                       ? "NoSQL collection structure"
-                      : schemaType === "sample" 
+                      : schemaType === "sample"
                       ? "schema (unused with Sample Data)"
-                      : "database schema"}.
+                      : "database schema"}
+                    .
                   </CardDescription>
                 </TabsContent>
                 <TabsContent value="examples" className="mt-2">
@@ -582,7 +654,8 @@ function GeneratorPageContent() {
                     Sample Data Records
                   </CardTitle>
                   <CardDescription className="text-sm mb-2">
-                    Paste in example records for the AI, in any format. Several records produce better results.
+                    Paste in example records for the AI, in any format. Several
+                    records produce better results.
                   </CardDescription>
                 </TabsContent>
               </Tabs>
@@ -619,11 +692,12 @@ function GeneratorPageContent() {
                   <a href="/terms" className="text-primary hover:underline">
                     Terms of Use
                   </a>
-                  . You are responsible for all content generated and any API charges 
-                  incurred when using this service with your own API key.
+                  . You are responsible for all content generated and any API
+                  charges incurred when using this service with your own API
+                  key.
                 </p>
-                <DailyLimitInfo 
-                  hasOwnApiKey={useUserSettings && !!(userSettings?.apiKey)} 
+                <DailyLimitInfo
+                  hasOwnApiKey={useUserSettings && !!userSettings?.apiKey}
                   ref={dailyLimitRef}
                 />
               </div>
@@ -631,7 +705,7 @@ function GeneratorPageContent() {
             <div className="p-6 pt-0 pb-1 flex items-center justify-start gap-2">
               <Button
                 onClick={handleGenerate}
-                disabled={isGenerating} 
+                disabled={isGenerating}
                 size="default"
                 className="flex-grow"
               >
@@ -642,18 +716,24 @@ function GeneratorPageContent() {
                 )}
                 {isGenerating ? "Generating..." : "Generate Mock Records"}
               </Button>
-              
+
               {session && (
                 <Button
                   variant="outline"
                   size="default"
                   onClick={() => setSaveDialogOpen(true)}
-                  disabled={isGenerating || 
-                    (schemaType !== "sample" && !schema.trim()) || 
-                    (schemaType === "sample" && !examples.trim())}
+                  disabled={
+                    isGenerating ||
+                    (schemaType !== "sample" && !schema.trim()) ||
+                    (schemaType === "sample" && !examples.trim())
+                  }
                 >
                   <Save className="mr-2 h-5 w-5" />
-                  Save {schemaType === "sample" ? "Examples" : "Schema"}
+                  {schemaId
+                    ? "Save Changes"
+                    : schemaType === "sample"
+                    ? "Save Examples"
+                    : "New Schema"}
                 </Button>
               )}
             </div>
@@ -665,12 +745,19 @@ function GeneratorPageContent() {
       <div className="w-full" ref={resultsRef}>
         <Card className="w-full">
           <CardHeader className="relative">
-            <div className="absolute top-0 right-0 bg-primary/10 text-primary px-2 py-2 rounded-tr-xl text-xs font-medium" style={{ top: "-24px" }}>
+            <div
+              className="absolute top-0 right-0 bg-primary/10 text-primary px-2 py-2 rounded-tr-xl text-xs font-medium"
+              style={{ top: "-24px" }}
+            >
               Results
             </div>
-            <CardTitle className="text-lg font-semibold mb-1">Generated Results</CardTitle>
+            <CardTitle className="text-lg font-semibold mb-1">
+              Generated Results
+            </CardTitle>
             <CardDescription>
-              {results ? "Your mock records are ready" : "Results will appear here after generation"}
+              {results
+                ? "Your mock records are ready"
+                : "Results will appear here after generation"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -688,12 +775,19 @@ function GeneratorPageContent() {
         open={saveDialogOpen}
         onOpenChange={setSaveDialogOpen}
         onSave={handleSave}
-        schemaData={{ 
-          schema: schemaType !== "sample" ? schema : "/* Using examples mode */", 
-          schemaType: schemaType === "sample" ? "sql" : schemaType as "sql" | "nosql" 
+        schemaData={{
+          schema:
+            schemaType !== "sample" ? schema : "/* Using examples mode */",
+          schemaType:
+            schemaType === "sample" ? "sql" : (schemaType as "sql" | "nosql"),
         }}
         userId={session?.user?.id || ""}
         handleApiCall={false}
+        initialName={schemaName || ""}
+        editMode={!!schemaId}
+        schemaId={schemaId || ""}
+        preferredFormat={format}
+        preferredRecordCount={recordCount}
       />
     </div>
   );

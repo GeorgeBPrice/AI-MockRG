@@ -16,6 +16,8 @@ const schemaUpdateSchema = z.object({
   schema: z.string().min(1).optional(),
   schemaType: z.enum(["sql", "nosql"]).optional(),
   additionalInstructions: z.string().optional(),
+  preferredFormat: z.string().optional(),
+  preferredRecordCount: z.number().min(1).max(100).optional(),
 });
 
 export async function GET(
@@ -101,6 +103,10 @@ export async function PATCH(
       updates.schemaType = result.data.schemaType;
     if (result.data.additionalInstructions !== undefined)
       updates.additionalInstructions = result.data.additionalInstructions;
+    if (result.data.preferredFormat !== undefined)
+      updates.preferredFormat = result.data.preferredFormat;
+    if (result.data.preferredRecordCount !== undefined)
+      updates.preferredRecordCount = result.data.preferredRecordCount;
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(

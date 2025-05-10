@@ -10,6 +10,8 @@ const schemaRequestSchema = z.object({
   schema: z.string().min(1),
   schemaType: z.enum(["sql", "nosql"]),
   additionalInstructions: z.string().optional(),
+  preferredFormat: z.string().optional(),
+  preferredRecordCount: z.number().min(1).max(100).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -66,6 +68,8 @@ export async function POST(request: NextRequest) {
       schema: result.data.schema,
       schemaType: result.data.schemaType,
       additionalInstructions: result.data.additionalInstructions,
+      preferredFormat: result.data.preferredFormat,
+      preferredRecordCount: result.data.preferredRecordCount,
     });
 
     return NextResponse.json({ schema: savedSchema }, { status: 201 });

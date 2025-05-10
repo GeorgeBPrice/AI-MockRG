@@ -9,6 +9,8 @@ export interface SavedSchema {
   schema: string;
   schemaType: "sql" | "nosql";
   additionalInstructions?: string;
+  preferredFormat?: string;
+  preferredRecordCount?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -298,7 +300,9 @@ export async function saveSchema(
         createdAt: now,
         updatedAt: now,
         ...(schema.description ? { description: schema.description } : {}),
-        ...(schema.additionalInstructions ? { additionalInstructions: schema.additionalInstructions } : {})
+        ...(schema.additionalInstructions ? { additionalInstructions: schema.additionalInstructions } : {}),
+        ...(schema.preferredFormat ? { preferredFormat: schema.preferredFormat } : {}),
+        ...(schema.preferredRecordCount ? { preferredRecordCount: schema.preferredRecordCount } : {})
       };
       
       // Clean object for Redis (removes null/undefined)
