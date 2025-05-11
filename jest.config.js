@@ -4,7 +4,6 @@ const createJestConfig = nextJest({
   dir: './',
 });
 
-// custom config for Jesty
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleDirectories: ['node_modules', '<rootDir>/'],
@@ -12,6 +11,10 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
+  // Expanded transformIgnorePatterns to include more ESM modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(uuid|next-auth|@panva|jose|openid-client)/)' 
+  ],
   coveragePathIgnorePatterns: [
     '/node_modules/',
     '<rootDir>/.next/',
@@ -41,4 +44,4 @@ const customJestConfig = {
   ],
 };
 
-export default createJestConfig(customJestConfig); 
+export default createJestConfig(customJestConfig);
