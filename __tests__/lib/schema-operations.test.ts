@@ -10,10 +10,13 @@ jest.mock('@/lib/storage-kv', () => ({
 
 // Mock crypto for UUID generation
 const mockUUID = 'mock-uuid-123';
-global.crypto = {
-  ...global.crypto,
-  randomUUID: jest.fn().mockReturnValue(mockUUID),
-};
+if (!global.crypto) {
+  global.crypto = {} as Crypto;
+}
+Object.defineProperty(global.crypto, 'randomUUID', {
+  value: jest.fn().mockReturnValue(mockUUID),
+  configurable: true,
+});
 
 interface SchemaData {
   name: string;

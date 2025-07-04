@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AuthButtons } from "./auth-buttons";
 import { Button } from "@/components/ui/button";
-import { Database, Save, Settings, BarChart2 } from "lucide-react";
+import { Database, Save, Settings, BarChart2, Key } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 export default function Navbar() {
@@ -23,9 +23,14 @@ export default function Navbar() {
       icon: <Save className="h-4 w-4 mr-2" />,
     },
     {
-      name: "API Settings",
+      name: "AI Settings",  
       href: "/settings",
       icon: <Settings className="h-4 w-4 mr-2" />,
+    },
+    {
+      name: "API Option",
+      href: "/api-keys",
+      icon: <Key className="h-4 w-4 mr-2" />,
     },
   ];
 
