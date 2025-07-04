@@ -1,0 +1,382 @@
+{
+  "info": {
+    "name": "AI Mocker External API",
+    "description": "Collection for testing the AI Mocker External API endpoints. This collection includes examples for generating mock data with different schemas and formats. The API returns clean data without explanatory text or markdown formatting, making it perfect for direct integration into applications.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_key}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://{{base_domain}}/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "YOUR_API_KEY_HERE",
+      "type": "string",
+      "description": "Replace with your actual API key"
+    }
+  ],
+  "item": [
+    {
+      "name": "Generate Mock Data",
+      "item": [
+        {
+          "name": "Basic SQL Generation - JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(255), created_at TIMESTAMP)\",\n  \"schemaType\": \"sql\",\n  \"count\": 5,\n  \"format\": \"json\",\n  \"additionalInstructions\": \"Generate realistic user data with proper email formats\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Generate 5 user records in JSON format using a simple SQL schema"
+          },
+          "response": []
+        },
+        {
+          "name": "Basic SQL Generation - CSV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(100), price DECIMAL(10,2), category VARCHAR(50))\",\n  \"schemaType\": \"sql\",\n  \"count\": 10,\n  \"format\": \"csv\",\n  \"additionalInstructions\": \"Generate diverse product data with realistic prices and categories\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Generate 10 product records in CSV format"
+          },
+          "response": []
+        },
+        {
+          "name": "Basic SQL Generation - SQL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"CREATE TABLE orders (order_id VARCHAR(20), customer_id INT, total_amount DECIMAL(10,2), order_date DATE, status VARCHAR(20))\",\n  \"schemaType\": \"sql\",\n  \"count\": 15,\n  \"format\": \"sql\",\n  \"additionalInstructions\": \"Generate realistic order data with proper date formats and status values like pending, shipped, delivered\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Generate 15 order records as SQL INSERT statements"
+          },
+          "response": []
+        },
+        {
+          "name": "Complex SQL Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"CREATE TABLE customers (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(255), age INT, phone VARCHAR(20), address TEXT, created_at TIMESTAMP, is_active BOOLEAN); CREATE TABLE orders (id INT PRIMARY KEY, customer_id INT, order_date DATE, total_amount DECIMAL(10,2), status ENUM('pending', 'shipped', 'delivered', 'cancelled'), FOREIGN KEY (customer_id) REFERENCES customers(id))\",\n  \"schemaType\": \"sql\",\n  \"count\": 8,\n  \"format\": \"json\",\n  \"examples\": \"Sample customer data with realistic names, ages, and contact information\",\n  \"additionalInstructions\": \"Generate realistic customer and order data with proper relationships and constraints\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Generate data for a complex schema with multiple tables and relationships"
+          },
+          "response": []
+        },
+        {
+          "name": "NoSQL Schema - Simple",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"{\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"name\\\": {\\\"type\\\": \\\"string\\\"}, \\\"age\\\": {\\\"type\\\": \\\"integer\\\", \\\"minimum\\\": 18, \\\"maximum\\\": 65}, \\\"email\\\": {\\\"type\\\": \\\"string\\\", \\\"format\\\": \\\"email\\\"}, \\\"department\\\": {\\\"type\\\": \\\"string\\\", \\\"enum\\\": [\\\"engineering\\\", \\\"marketing\\\", \\\"sales\\\", \\\"hr\\\"]}}}\",\n  \"schemaType\": \"nosql\",\n  \"count\": 12,\n  \"format\": \"json\",\n  \"additionalInstructions\": \"Generate diverse employee data with realistic ages and department assignments\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Generate employee data using a JSON schema with constraints"
+          },
+          "response": []
+        },
+        {
+          "name": "NoSQL Schema - Complex",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"{\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"id\\\": {\\\"type\\\": \\\"string\\\"}, \\\"user\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"name\\\": {\\\"type\\\": \\\"string\\\"}, \\\"email\\\": {\\\"type\\\": \\\"string\\\", \\\"format\\\": \\\"email\\\"}, \\\"preferences\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"theme\\\": {\\\"type\\\": \\\"string\\\", \\\"enum\\\": [\\\"light\\\", \\\"dark\\\"]}, \\\"notifications\\\": {\\\"type\\\": \\\"boolean\\\"}}}}}, \\\"orders\\\": {\\\"type\\\": \\\"array\\\", \\\"items\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"orderId\\\": {\\\"type\\\": \\\"string\\\"}, \\\"amount\\\": {\\\"type\\\": \\\"number\\\", \\\"minimum\\\": 0}, \\\"items\\\": {\\\"type\\\": \\\"array\\\", \\\"items\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"productId\\\": {\\\"type\\\": \\\"string\\\"}, \\\"quantity\\\": {\\\"type\\\": \\\"integer\\\", \\\"minimum\\\": 1}, \\\"price\\\": {\\\"type\\\": \\\"number\\\", \\\"minimum\\\": 0}}}}}}}}}}\",\n  \"schemaType\": \"nosql\",\n  \"count\": 6,\n  \"format\": \"json\",\n  \"additionalInstructions\": \"Generate complex user data with nested objects and arrays representing user profiles with order history\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Generate complex nested data using a detailed JSON schema"
+          },
+          "response": []
+        },
+        {
+          "name": "Custom Parameters",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"CREATE TABLE events (id INT PRIMARY KEY, title VARCHAR(200), description TEXT, start_date TIMESTAMP, end_date TIMESTAMP, location VARCHAR(255), capacity INT, price DECIMAL(8,2))\",\n  \"schemaType\": \"sql\",\n  \"count\": 20,\n  \"format\": \"xml\",\n  \"examples\": \"Sample event data with conferences, workshops, and meetups\",\n  \"additionalInstructions\": \"Generate diverse event data with realistic titles, descriptions, and pricing\",\n  \"temperature\": 0.8,\n  \"maxTokens\": 6000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Generate event data with custom temperature and maxTokens parameters in XML format"
+          },
+          "response": []
+        },
+        {
+          "name": "Error - Invalid Schema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"\",\n  \"count\": 150\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Test error handling with invalid schema and count exceeding limits"
+          },
+          "response": []
+        },
+        {
+          "name": "Error - Missing Authentication",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"CREATE TABLE test (id INT)\",\n  \"count\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Test authentication error by removing the Authorization header"
+          },
+          "response": []
+        }
+      ],
+      "description": "Collection of requests for generating mock data with different schemas and formats"
+    },
+    {
+      "name": "Environment Setup",
+      "item": [
+        {
+          "name": "Validate API Key",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schema\": \"CREATE TABLE test (id INT)\",\n  \"count\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/generate",
+              "host": ["{{base_url}}"],
+              "path": ["generate"]
+            },
+            "description": "Use this request to test if your API key is working. A successful response indicates the key is valid."
+          },
+          "response": []
+        }
+      ],
+      "description": "Helper requests for setting up your environment"
+    },
+    {
+      "name": "API Key Management",
+      "item": [
+        {
+          "name": "Create API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Production App\"\n}"
+            },
+            "url": {
+              "raw": "https://our-server-domain/api/user/api-keys",
+              "host": ["https://our-server-domain"],
+              "path": ["api", "user", "api-keys"]
+            },
+            "description": "Create a new API key. Note: This endpoint requires user authentication via session cookies, not API key authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "List API Keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://our-server-domain/api/user/api-keys",
+              "host": ["https://our-server-domain"],
+              "path": ["api", "user", "api-keys"]
+            },
+            "description": "List all active API keys for your account. Note: This endpoint requires user authentication via session cookies."
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke API Key",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "https://our-server-domain/api/user/api-keys/{{key_id}}",
+              "host": ["https://our-server-domain"],
+              "path": ["api", "user", "api-keys", "{{key_id}}"]
+            },
+            "description": "Revoke an API key. Replace {{key_id}} with the actual key ID. Note: This endpoint requires user authentication via session cookies."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing API keys through the web interface"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Log the request details for debugging",
+          "console.log('Making request to:', pm.request.url.toString());",
+          "console.log('Method:', pm.request.method);",
+          "console.log('Headers:', pm.request.headers.toJSON());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Test response status",
+          "pm.test('Status code is 200 or 4xx for expected errors', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 401, 429, 500]);",
+          "});",
+          "",
+          "// Test response structure",
+          "pm.test('Response has required fields', function () {",
+          "    const responseJson = pm.response.json();",
+          "    pm.expect(responseJson).to.have.property('success');",
+          "    if (responseJson.success) {",
+          "        pm.expect(responseJson).to.have.property('result');",
+          "        pm.expect(responseJson).to.have.property('usage');",
+          "        pm.expect(responseJson.usage).to.have.property('limit');",
+          "        pm.expect(responseJson.usage).to.have.property('remaining');",
+          "        pm.expect(responseJson.usage).to.have.property('resetTimestamp');",
+          "    } else {",
+          "        pm.expect(responseJson).to.have.property('error');",
+          "        if (responseJson.details) {",
+          "            pm.expect(responseJson.details).to.be.an('object');",
+          "        }",
+          "    }",
+          "});",
+          "",
+          "// Test rate limit headers",
+          "pm.test('Rate limit headers are present', function () {",
+          "    pm.expect(pm.response.headers.get('X-RateLimit-Limit')).to.exist;",
+          "    pm.expect(pm.response.headers.get('X-RateLimit-Remaining')).to.exist;",
+          "    pm.expect(pm.response.headers.get('X-RateLimit-Reset')).to.exist;",
+          "});",
+          "",
+          "// Log response for debugging",
+          "console.log('Response status:', pm.response.status);",
+          "console.log('Response body:', pm.response.text());"
+        ]
+      }
+    }
+  ]
+}
