@@ -54,7 +54,7 @@ export default function SignInPage() {
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <div className="flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <CardTitle>Loading...</CardTitle>
@@ -96,13 +96,13 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+    <div className="flex items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
           <CardDescription>Choose a provider to sign in</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-4">
           {loadingProviders ? (
             <div className="text-center text-muted-foreground">Loading sign-in options...</div>
           ) : providers ? (

@@ -25,16 +25,18 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className}`}>
         <SessionProvider>
-            <div className="min-h-screen flex flex-col">
-              <Navbar />
-              <main className="flex-1 container mx-auto py-4 px-4 md:px-6">
+          <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <main className="flex-1 px-4 pb-6 pt-6 sm:px-6 lg:px-8">
+              <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
                 {children}
-              </main>
-              <Footer />
-            </div>
-            <Toaster />
+              </div>
+            </main>
+            <Footer />
+          </div>
+          <Toaster />
         </SessionProvider>
         <Analytics />
       </body>

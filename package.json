@@ -1,6 +1,6 @@
 {
   "name": "ai-mocker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -38,11 +38,12 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
     "ioredis": "^5.6.1",
+    "jspdf": "^3.0.4",
     "lucide-react": "^0.487.0",
-    "next": "15.2.4",
-    "next-auth": "^4.24.11",
+    "next": "15.5.9",
+    "next-auth": "^4.24.13",
     "next-themes": "^0.4.6",
-    "nodemailer": "^6.10.0",
+    "nodemailer": "^7.0.11",
     "openai": "^4.91.1",
     "react": "^19.0.0",
     "react-ace": "^14.0.1",

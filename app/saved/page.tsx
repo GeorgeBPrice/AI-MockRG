@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Database, ExternalLink, Calendar, FilePlus, RefreshCcw } from "lucide-react";
 import DeleteSchemaButton from "@/components/generator/delete-schema-button";
 import { toast } from "@/components/ui/use-toast";
+import SchemaCardSkeleton from "@/components/ui/schema-card-skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 
 function formatDate(timestamp: number): string {
@@ -103,10 +105,28 @@ export default function SavedSchemasPage() {
       }
   }, [status, fetchSchemas]);
 
+  const renderSkeletonGrid = () => (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 6 }, (_, index) => (
+        <SchemaCardSkeleton key={`schema-skeleton-${index}`} />
+      ))}
+    </div>
+  );
+
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center h-40">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      <div className="space-y-6 animate-pulse" aria-live="polite">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-32 rounded-full" />
+            <Skeleton className="h-10 w-32 rounded-full" />
+          </div>
+        </div>
+        {renderSkeletonGrid()}
       </div>
     );
   }
@@ -125,31 +145,38 @@ export default function SavedSchemasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Saved Schemas</h1>
-        <div className="flex space-x-2">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">Saved Schemas</p>
+          <h1 className="text-3xl font-bold leading-tight">Your Saved Schemas</h1>
+          <p className="text-sm text-muted-foreground">
+            Quickly access and manage the schemas you have saved for future runs.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
           <Button
             variant="outline"
             onClick={handleRefresh}
             disabled={isLoading}
+            className="flex-1 sm:flex-none"
           >
-            <RefreshCcw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCcw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
             {isLoading ? "Loading..." : "Refresh"}
           </Button>
-          <Button asChild>
-            <Link href="/schema/new">
-              <FilePlus className="mr-2 h-4 w-4" />
+          <Button asChild className="flex-1 sm:flex-none">
+            <Link href="/schema/new" className="flex items-center justify-center gap-2">
+              <FilePlus className="h-4 w-4" />
               New Schema
             </Link>
           </Button>
         </div>
-      </div>
+      </header>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center h-40">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-        </div>
-      ) : schemas.length === 0 ? (
+        {isLoading ? (
+          <div className="animate-pulse" aria-live="polite">
+            {renderSkeletonGrid()}
+          </div>
+        ) : schemas.length === 0 ? (
         <div className="text-center py-12">
           <Database className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold">No schemas saved yet</h3>

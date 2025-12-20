@@ -51,8 +51,8 @@ describe('Button Component', () => {
     expect(button).toBeInTheDocument();
     
     // Default variant classes should be applied
-    expect(button).toHaveClass('bg-primary');
-    expect(button).toHaveClass('text-primary-foreground');
+    expect(button).toHaveClass('cta-button');
+    expect(button).toHaveClass('text-white');
     
     // Default size classes should be applied
     expect(button).toHaveClass('h-9');

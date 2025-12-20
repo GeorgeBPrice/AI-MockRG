@@ -57,7 +57,7 @@ export function AuthButtons() {
           <DropdownMenuItem asChild>
             <Link href="/saved">
               <User className="mr-2 h-4 w-4" />
-              <span>Saved Schemas</span>
+              <span>Your Saved Schemas</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>

@@ -159,7 +159,7 @@ export function ConfigPanel({
     <Card className="h-full w-full overflow-y-auto">
       <CardHeader className="relative">
         {stepNumber && (
-          <div className="absolute top-0 right-0 bg-primary/10 text-primary px-2 py-2 rounded-tr-xl text-xs font-medium" style={{ top: "-24px" }}>
+          <div className="absolute top-0 right-0 bg-primary/10 text-primary px-2 py-2 rounded-tr-xl text-xs font-medium" style={{ top: "-24px", right: "-24px" }}>
             Step 1
           </div>
         )}
@@ -168,7 +168,7 @@ export function ConfigPanel({
           Adjust mock data generation settings. Logged in users can use their own API keys and models for unlimited generations.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 mt-4">
         <div className="space-y-2">
           <Label htmlFor="schema-type">Data Source Type</Label>
           <Select value={schemaType} onValueChange={(value) => setSchemaType(value as typeof schemaType)} disabled={isGenerating}>
