@@ -88,6 +88,16 @@ export default function NewSchemaPage() {
     }
   };
 
+  const resetForm = () => {
+    setSchema("");
+    setSchemaType("sql");
+    setName("");
+    setDescription("");
+    setAdditionalInstructions("");
+    setPreferredFormat("json");
+    setPreferredRecordCount(10);
+  };
+
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -104,15 +114,6 @@ export default function NewSchemaPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Create New Schema</h1>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={() => router.push("/saved")}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {isSaving ? "Saving..." : "Save Schema"}
-          </Button>
-        </div>
       </div>
 
       <Card>
@@ -231,6 +232,25 @@ export default function NewSchemaPage() {
           </div>
         </CardFooter>
       </Card>
+
+      <div className="flex flex-col gap-3 border-t border-white/10 pt-4">
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="w-full justify-center"
+        >
+          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isSaving ? "Saving..." : "Save Schema"}
+        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="ghost" className="flex-1" onClick={resetForm}>
+            Reset
+          </Button>
+          <Button variant="outline" className="flex-1" onClick={() => router.push("/saved")}>
+            Cancel
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

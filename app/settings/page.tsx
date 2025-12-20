@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Skeleton from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   // Add global CSS for button hover cursor
@@ -329,14 +330,6 @@ export default function SettingsPage() {
     setHeadersText('');
   };
 
-  if (status === "loading" || (status === "authenticated" && isLoading)) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   if (status === "unauthenticated") {
     return (
          <div className="text-center py-12">
@@ -349,242 +342,280 @@ export default function SettingsPage() {
     );
   }
 
+  const showSkeletonContent = status === "loading" || (status === "authenticated" && isLoading);
+
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Settings</h1>
+      <section className="space-y-2">
+        <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">AI Settings</p>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold leading-tight">AI Provider Configuration</h1>
+          <p className="text-sm text-muted-foreground max-w-3xl">
+            Override default AI settings. Leave blank to use defaults.
+          </p>
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Provider Configuration</CardTitle>
-            <CardDescription>
-              Override default AI settings. Leave blank to use defaults.
-            </CardDescription>
-            <CardDescription>
-              <FileWarning className="w-4 h-4 inline-block text-red-400" />
-              <span className="text-xs text-red-400 px-1">
-                Your API keys are stored securely in your browsers local storage, not on our servers. 
-                Your settings will be lost if you clear your browser data.
-              </span>
-            </CardDescription>
-            <button
-              type="button"
-              onClick={() => setShowModelReference(!showModelReference)}
-              className="flex items-center text-sm font-medium mt-2 text-muted-foreground hover:text-foreground"
-            >
-              <HelpCircle className="h-4 w-4 mr-2" />
-              Model Configuration Reference
-              {showModelReference ? (
-                <ChevronUp className="ml-auto h-4 w-4" />
-              ) : (
-                <ChevronDown className="ml-auto h-4 w-4" />
-              )}
-            </button>
-            
-            {showModelReference && (
-              <div className="space-y-3 text-xs text-muted-foreground mt-2 p-3 border rounded-md bg-muted/30">
-                <div>
-                  <h4 className="font-semibold">OpenAI</h4>
-                  <p>Model: <code>gpt-4o, gpt-4-turbo, gpt-3.5-turbo</code></p>
-                  <p>Base URL: <code>https://api.openai.com/v1</code> (default)</p>
-                  <p>Auth: API key as Bearer token</p>
+        {showSkeletonContent ? (
+          <>
+            {Array.from({ length: 2 }).map((_, cardIndex) => (
+              <div
+                key={`settings-skeleton-card-${cardIndex}`}
+                className="space-y-4 rounded-[2rem] border border-white/10 bg-card p-6 shadow-[0_20px_60px_rgba(2,6,23,0.7)]"
+              >
+                <Skeleton className="h-5 w-40 rounded-lg" />
+                <Skeleton className="h-3 w-56 rounded-full" />
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, fieldIndex) => (
+                    <Skeleton
+                      key={`settings-skeleton-field-${cardIndex}-${fieldIndex}`}
+                      className="h-10 w-full rounded-2xl"
+                    />
+                  ))}
                 </div>
-                
-                <div>
-                  <h4 className="font-semibold">Anthropic Claude</h4>
-                  <p>Model: <code>claude-3-7-sonnet, claude-3-haiku</code></p>
-                  <p>Base URL: <code>https://api.anthropic.com/v1/messages</code></p>
-                  <p>Header: <code>anthropic-version: 2023-06-01</code></p>
-                  <p>Auth: API key as <code>x-api-key</code> header</p>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold">Mistral AI</h4>
-                  <p>Model: <code>mistral-tiny, mistral-small, mistral-medium</code></p>
-                  <p>Base URL: <code>https://api.mistral.ai/v1/chat/completions</code></p>
-                  <p>Auth: API key as Bearer token</p>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold">Google Gemini</h4>
-                  <p>Model: <code>gemini-pro, gemini-1.5-pro</code></p>
-                  <p>Base URL: <code>https://generativelanguage.googleapis.com/v1/models</code></p>
-                  <p>Auth: API key sent as URL parameter</p>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold">Cohere</h4>
-                  <p>Model: <code>command, command-r, command-r-plus</code></p>
-                  <p>Base URL: <code>https://api.cohere.ai/v1/generate</code></p>
-                  <p>Auth: API key as Bearer token</p>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold">Azure OpenAI</h4>
-                  <p>Model: <code>azure:deployment-name</code></p>
-                  <p>Base URL: <code>https://your-resource.openai.azure.com/openai/deployments</code></p>
-                  <p>Auth: API key as Bearer token</p>
+                <div className="flex justify-between gap-3">
+                  <Skeleton className="h-10 w-28 rounded-full" />
+                  <Skeleton className="h-10 w-28 rounded-full" />
                 </div>
               </div>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="apiKey">Your API Key</Label>
-              <Input
-                id="apiKey"
-                name="apiKey"
-                type="password"
-                placeholder="sk-... (leave blank to use default)"
-                value={aiSettings.apiKey}
-                onChange={handleSettingChange}
-                disabled={isSaving}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="model">Model Name</Label>
-              <Input
-                id="model"
-                name="model"
-                type="text"
-                placeholder="e.g., gpt-4o-mini, claude-3-7-sonnet, gemini-pro, etc."
-                value={aiSettings.model}
-                onChange={handleSettingChange}
-                disabled={isSaving}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="baseUrl">API Base URL (Optional)</Label>
-              <Input
-                id="baseUrl"
-                name="baseUrl"
-                type="text"
-                placeholder="e.g., https://api.groq.com/openai/v1"
-                value={aiSettings.baseUrl}
-                onChange={handleSettingChange}
-                disabled={isSaving}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="temperature">Temperature: {aiSettings.temperature?.toFixed(1)}</Label>
-              <Slider
-                id="temperature"
-                min={0}
-                max={2}
-                step={0.1}
-                value={[aiSettings.temperature ?? 0.7]}
-                onValueChange={handleTemperatureChange}
-                disabled={isSaving}
-              />
-              <p className="text-xs text-muted-foreground">
-                Controls randomness: 0 is more focused, 2 is more creative.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="maxTokens">Max Tokens: {aiSettings.maxTokens}</Label>
-              <Slider
-                id="maxTokens"
-                min={1000}
-                max={8000}
-                step={100}
-                value={[aiSettings.maxTokens ?? 4000]}
-                onValueChange={handleMaxTokensChange}
-                disabled={isSaving}
-              />
-              <p className="text-xs text-muted-foreground">
-                Limit the length of the AI response.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="headers">Custom Headers (Optional)</Label>
-              <Textarea
-                id="headers"
-                placeholder="# Header example: Anthropic-Version: 2023-06-01"
-                value={headersText}
-                onChange={handleHeadersChange}
-                disabled={isSaving}
-                className="font-mono text-sm h-14"
-              />
-                  <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-md border border-amber-200 dark:border-amber-800">
-                    <p className="text-sm mb-1">
-                      <strong>Important:</strong> By using this service, you agree to our{" "}
-                      <a href="/terms" className="text-primary hover:underline">
-                        Terms of Use
-                      </a>
-                      .
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      You are responsible for all API charges incurred when using your API keys with our service.
-                    </p>
+            ))}
+          </>
+        ) : (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle>AI Provider Configuration</CardTitle>
+                <CardDescription>
+                  Override default AI settings. Leave blank to use defaults.
+                </CardDescription>
+                <CardDescription>
+                  <FileWarning className="w-4 h-4 inline-block text-red-400" />
+                  <span className="text-xs text-red-400 px-1">
+                    Your API keys are stored securely in your browsers local storage, not on our servers. 
+                    Your settings will be lost if you clear your browser data.
+                  </span>
+                </CardDescription>
+                <button
+                  type="button"
+                  onClick={() => setShowModelReference(!showModelReference)}
+                  className="flex items-center text-sm font-medium mt-2 text-muted-foreground hover:text-foreground"
+                >
+                  <HelpCircle className="h-4 w-4 mr-2" />
+                  Model Configuration Reference
+                  {showModelReference ? (
+                    <ChevronUp className="ml-auto h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="ml-auto h-4 w-4" />
+                  )}
+                </button>
+                
+                {showModelReference && (
+                  <div className="space-y-3 text-xs text-muted-foreground mt-2 p-3 border rounded-md bg-muted/30">
+                    <div>
+                      <h4 className="font-semibold">OpenAI</h4>
+                      <p>Model: <code>gpt-4o, gpt-4-turbo, gpt-3.5-turbo</code></p>
+                      <p>Base URL: <code>https://api.openai.com/v1</code> (default)</p>
+                      <p>Auth: API key as Bearer token</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold">Anthropic Claude</h4>
+                      <p>Model: <code>claude-3-7-sonnet, claude-3-haiku</code></p>
+                      <p>Base URL: <code>https://api.anthropic.com/v1/messages</code></p>
+                      <p>Header: <code>anthropic-version: 2023-06-01</code></p>
+                      <p>Auth: API key as <code>x-api-key</code> header</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold">Mistral AI</h4>
+                      <p>Model: <code>mistral-tiny, mistral-small, mistral-medium</code></p>
+                      <p>Base URL: <code>https://api.mistral.ai/v1/chat/completions</code></p>
+                      <p>Auth: API key as Bearer token</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold">Google Gemini</h4>
+                      <p>Model: <code>gemini-pro, gemini-1.5-pro</code></p>
+                      <p>Base URL: <code>https://generativelanguage.googleapis.com/v1/models</code></p>
+                      <p>Auth: API key sent as URL parameter</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold">Cohere</h4>
+                      <p>Model: <code>command, command-r, command-r-plus</code></p>
+                      <p>Base URL: <code>https://api.cohere.ai/v1/generate</code></p>
+                      <p>Auth: API key as Bearer token</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold">Azure OpenAI</h4>
+                      <p>Model: <code>azure:deployment-name</code></p>
+                      <p>Base URL: <code>https://your-resource.openai.azure.com/openai/deployments</code></p>
+                      <p>Auth: API key as Bearer token</p>
+                    </div>
                   </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button onClick={handleSave} disabled={isSaving || isLoading}>
-              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isSaving ? "Saving..." : settingsSaved ? "Settings Saved" : "Save AI Settings"}
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleClearForm} 
-              disabled={isSaving || isLoading}
-            >
-              Clear Form
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Information</CardTitle>
-            <CardDescription>
-              Your current account details
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {session?.user ? (
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <p className="font-medium">Name:</p>
-                  <div className="font-medium text-foreground">
-                    {session.user.name || "Not available"}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <p className="font-medium">Email:</p>
-                  <p>{session.user.email || "Not provided"}</p>
-                </div>
-                <div className="mt-6 pt-4 border-t">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Manage your stored API settings. These actions only affect your local device, 
-                    the local storage in the browser is cleared when you delete your API settings.
-                  </p>
-                  <Button 
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setConfirmDeleteOpen(true)}
-                    disabled={!settingsSaved || isSaving}
-                    className="mt-2"
-                  >
-                    Delete API Settings
-                  </Button>
-                </div>
-                <div className="space-y-2 mt-6 pt-6 border-t">
-x                  <DailyLimitInfo 
-                    hasOwnApiKey={!!aiSettings.apiKey} 
-                    variant="detailed" 
-                    className="mt-2" 
+                )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">Your API Key</Label>
+                  <Input
+                    id="apiKey"
+                    name="apiKey"
+                    type="password"
+                    placeholder="sk-... (leave blank to use default)"
+                    value={aiSettings.apiKey}
+                    onChange={handleSettingChange}
+                    disabled={isSaving}
                   />
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Free users are limited to 5 generations per day. Add your own API key above to bypass this limit.
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="model">Model Name</Label>
+                  <Input
+                    id="model"
+                    name="model"
+                    type="text"
+                    placeholder="e.g., gpt-4o-mini, claude-3-7-sonnet, gemini-pro, etc."
+                    value={aiSettings.model}
+                    onChange={handleSettingChange}
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="baseUrl">API Base URL (Optional)</Label>
+                  <Input
+                    id="baseUrl"
+                    name="baseUrl"
+                    type="text"
+                    placeholder="e.g., https://api.groq.com/openai/v1"
+                    value={aiSettings.baseUrl}
+                    onChange={handleSettingChange}
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="temperature">Temperature: {aiSettings.temperature?.toFixed(1)}</Label>
+                  <Slider
+                    id="temperature"
+                    min={0}
+                    max={2}
+                    step={0.1}
+                    value={[aiSettings.temperature ?? 0.7]}
+                    onValueChange={handleTemperatureChange}
+                    disabled={isSaving}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Controls randomness: 0 is more focused, 2 is more creative.
                   </p>
                 </div>
-              </div>
-            ) : (
-              <p>Not signed in</p>
-            )}
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="maxTokens">Max Tokens: {aiSettings.maxTokens}</Label>
+                  <Slider
+                    id="maxTokens"
+                    min={1000}
+                    max={8000}
+                    step={100}
+                    value={[aiSettings.maxTokens ?? 4000]}
+                    onValueChange={handleMaxTokensChange}
+                    disabled={isSaving}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Limit the length of the AI response.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="headers">Custom Headers (Optional)</Label>
+                  <Textarea
+                    id="headers"
+                    placeholder="# Header example: Anthropic-Version: 2023-06-01"
+                    value={headersText}
+                    onChange={handleHeadersChange}
+                    disabled={isSaving}
+                    className="font-mono text-sm h-14"
+                  />
+                      <div className="mb-4 p-3 rounded-md border border-amber-200 dark:border-amber-800">
+                        <p className="text-sm mb-1">
+                          <strong>Important:</strong> By using this service, you agree to our{" "}
+                          <a href="/terms" className="text-primary hover:underline">
+                            Terms of Use
+                          </a>
+                          .
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          You are responsible for all API charges incurred when using your API keys with our service.
+                        </p>
+                      </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button onClick={handleSave} disabled={isSaving || isLoading}>
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {isSaving ? "Saving..." : settingsSaved ? "Settings Saved" : "Save AI Settings"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearForm} 
+                  disabled={isSaving || isLoading}
+                >
+                  Clear Form
+                </Button>
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Information</CardTitle>
+                <CardDescription>
+                  Your current account details
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {session?.user ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium">Name:</p>
+                      <div className="font-medium text-foreground">
+                        {session.user.name || "Not available"}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium">Email:</p>
+                      <p>{session.user.email || "Not provided"}</p>
+                    </div>
+                    <div className="mt-6 pt-4 border-t">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Manage your stored API settings. These actions only affect your local device, 
+                        the local storage in the browser is cleared when you delete your API settings.
+                      </p>
+                      <Button 
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setConfirmDeleteOpen(true)}
+                        disabled={!settingsSaved || isSaving}
+                        className="mt-2"
+                      >
+                        Delete API Settings
+                      </Button>
+                    </div>
+                    <div className="space-y-2 mt-6 pt-6 border-t">
+                      <DailyLimitInfo 
+                        hasOwnApiKey={!!aiSettings.apiKey} 
+                        variant="detailed" 
+                        className="mt-2" 
+                      />
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Free users are limited to 5 generations per day. Add your own API key to bypass this limit.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p>Not signed in</p>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>

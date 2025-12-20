@@ -2,16 +2,15 @@
 
 A powerful tool for generating realistic mock data using AI LLMs.
 
-## New in v1.1.0: External API
+## New in v1.2.0: Template & UI overhaul
 
-**Programmatic Access with API Keys**
+**Enhanced UX, templates, and event analytics**
 
-- **External API Endpoint**: `POST /api/v1/generate` for programmatic data generation
-- **Secure API Key Management**: Create, manage, and revoke API keys with 90-day expiry
-- **Bearer Token Authentication**: Use API keys in Authorization header
-- **Clean Data Response**: Get clean JSON/SQL/CSV/etc, without explanatory text
-- **Rate Limiting**: 5 free generations per day (paid tiers coming soon).
-- **Multiple Formats**: JSON, SQL, CSV, XML, HTML, TXT support
+- Dedicated **Templates page** with searchable categories, SQL/NoSQL toggles, and generator injection
+- Modal template browser using gradient CTAs, skeleton loaders, and dual-schema cards that prefill the generator
+- Refreshed **Generator UI**: skeleton loaders, progress/cancel controls, CTA gradient utilities, and repositioned save/reset controls
+- **Events dashboard table** with filters plus portrait jsPDF export for auditing
+- Unified dark theme and CSS overhual, nav/footer polish, and consistent CTA styles
 
 ### Simplest Quick Start with External API
 
@@ -103,9 +102,9 @@ VERCEL_OIDC_TOKEN=token_to_connect_to_redis_service
 - Real-time record generation request tracking using Redis Streams/Upstash
 - Rate limitting of free API record generation requests using Redis
 - Export data in JSON, SQL, or CSV formats
-- **NEW**: External API with secure API key authentication
-- **NEW**: Programmatic data generation for integrations
-- **NEW**: API key management with usage tracking
+- **NEW**: Templates catalogue & modal picker with SQL/NoSQL toggle and generator injection
+- **NEW**: Generator progress/cancel controls plus CTA gradient system
+- **NEW**: Events dashboard table with filters and portrait jsPDF export
 
 ## Tech Stack
 
@@ -213,6 +212,12 @@ npm run test:critical
 ```
 
 ## Releases
+
+### v1.2.0 - UI, templates, and analytics
+- **Templates catalogue**: Dedicated templates page + modal picker with SQL/NoSQL toggle, dual-schema data, and generator injection
+- **Generator polish**: Skeletons, CTA gradient system, progress/cancellation controls, and repositioned save/reset actions
+- **Events dashboard**: Filterable table prepared for audits and portrait jsPDF export
+- **Global theming**: Unified dark CSS theme, navbar/footer polish, and CTA color tokens
 
 ### v1.1.0 - External API & API Key Management
 - **External API**: New `/api/v1/generate` endpoint for programmatic access

@@ -31,12 +31,13 @@ const Toast = React.forwardRef<
       role="alert"
       aria-label="toast"
       className={cn(
-        "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
-        variant === "default" && "border bg-background text-foreground",
+        "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-xl border px-6 py-5 shadow-2xl shadow-slate-900/10 bg-opacity-90 transition duration-250 ease-out backdrop-blur-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none",
+        "hover:-translate-y-0.5",
+        variant === "default" && "border border-border bg-background text-foreground",
         variant === "destructive" &&
-          "destructive border-destructive bg-destructive text-destructive-foreground",
+          "border-destructive bg-destructive text-destructive-foreground",
         variant === "success" &&
-          "border-green-500 bg-green-100 text-green-900 dark:bg-green-900/20 dark:border-green-500/30 dark:text-green-300",
+          "border-green-500 bg-green-50 text-green-900 dark:bg-green-900/20 dark:border-green-500/30 dark:text-green-300",
         className
       )}
       {...props}

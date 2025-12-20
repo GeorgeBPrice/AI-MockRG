@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Database, Github, Code, ArrowRight } from "lucide-react";
+import { Database, Github, ArrowRight, GitBranch, Bot } from "lucide-react";
 
 export default function Home() {
   return (
@@ -42,7 +42,7 @@ export default function Home() {
           </p>
         </div>
         <div className="flex flex-col items-center text-center p-6 border rounded-lg">
-          <Code className="h-10 w-10 mb-4" />
+          <Bot className="h-10 w-10 mb-4" />
           <h3 className="text-xl font-semibold mb-2">AI-Powered</h3>
           <p className="text-muted-foreground">
             Realistic contextual data generated with AI for meaningful test
@@ -50,17 +50,10 @@ export default function Home() {
           </p>
         </div>
         <div className="flex flex-col items-center text-center p-6 border rounded-lg">
-          <svg
-            className="h-10 w-10 mb-4"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-          </svg>
+          <GitBranch className="h-10 w-10 mb-4" />
           <h3 className="text-xl font-semibold mb-2">Free & Open Source</h3>
           <p className="text-muted-foreground">
-            Completely free-to-use with your own API key. Limited free usage also available.
+          Limited free usage available, or completely free-to-use with your own API key. 
           </p>
         </div>
       </div>

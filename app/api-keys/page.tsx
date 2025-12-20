@@ -48,6 +48,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
+import Skeleton from "@/components/ui/skeleton";
 
 interface ApiKey {
   id: string;
@@ -217,18 +218,7 @@ export default function ApiKeysPage() {
     return { status: "active", color: "default", text: `${days} days left` };
   };
 
-  if (status === "loading" || loading) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading API keys...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const showSkeletonContent = status === "loading" || loading;
 
   if (status === "unauthenticated") {
     return (
@@ -243,18 +233,18 @@ export default function ApiKeysPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="space-y-6">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">Security</p>
           <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
-          <p className="text-muted-foreground">
-            Manage your API keys for external access to AI Mocker
+          <p className="text-sm text-muted-foreground max-w-3xl">
+            Control third-party access with scoped API keys, monitor their usage, and rotate them easily.
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
+        <DialogTrigger asChild>
+          <Button className="w-full sm:w-auto" disabled={showSkeletonContent}>
               <Plus className="h-4 w-4 mr-2" />
               Create API Key
             </Button>
@@ -269,7 +259,9 @@ export default function ApiKeysPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="key-name">API Key Name</Label>
+                <Label htmlFor="key-name" className="pb-2">
+                  API Key Name
+                </Label>
                 <Input
                   id="key-name"
                   placeholder="e.g., Production App, Development Testing"
@@ -278,7 +270,7 @@ export default function ApiKeysPage() {
                   onKeyPress={(e) => e.key === "Enter" && createApiKey()}
                 />
               </div>
-              <div className="flex justify-end space-x-2">
+              <div className="flex flex-col gap-2 justify-end sm:flex-row">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -288,17 +280,14 @@ export default function ApiKeysPage() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  onClick={createApiKey}
-                  disabled={creating || !newKeyName.trim()}
-                >
+                <Button onClick={createApiKey} disabled={creating || !newKeyName.trim()}>
                   {creating ? "Creating..." : "Create API Key"}
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </header>
 
       {/* New API Key Display */}
       {showNewKey && newApiKey && (
@@ -347,8 +336,33 @@ export default function ApiKeysPage() {
         </div>
       )}
 
-      {/* Main Content */}
-      <Tabs defaultValue="keys" className="space-y-6">
+      {showSkeletonContent ? (
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <Skeleton className="h-10 w-40 rounded-full" />
+            <Skeleton className="h-10 w-40 rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={`api-key-skeleton-${index}`}
+                className="space-y-3 rounded-2xl border border-white/10 bg-card p-5 shadow-[0_25px_60px_rgba(2,6,23,0.7)]"
+              >
+                <Skeleton className="h-5 w-32 rounded-full" />
+                <Skeleton className="h-3 w-40 rounded-full" />
+                <Skeleton className="h-10 w-full rounded-2xl" />
+                <div className="flex justify-between gap-3">
+                  <Skeleton className="h-10 w-24 rounded-full" />
+                  <Skeleton className="h-10 w-24 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Main Content */}
+          <Tabs defaultValue="keys" className="space-y-6">
         <TabsList>
           <TabsTrigger value="keys">API Keys</TabsTrigger>
           <TabsTrigger value="docs">Documentation</TabsTrigger>
@@ -729,7 +743,9 @@ result = generate_mock_data(
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+          </Tabs>
+        </>
+      )}
     </div>
   );
 }

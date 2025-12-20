@@ -6,12 +6,20 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
-      className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
-        className
-      )}
-      {...props}
-    />
+      className="group relative overflow-hidden rounded-[1.5rem] p-px"
+      style={{
+        backgroundImage:
+          "linear-gradient(135deg, var(--card-gradient-start), var(--card-gradient-middle), var(--card-gradient-end))",
+      }}
+    >
+      <div
+        className={cn(
+          "min-h-full rounded-[1.3125rem] border border-border/60 bg-card px-6 py-6 shadow-[0_15px_35px_rgba(15,23,42,0.1)] transition-all duration-300 group-hover:border-border/80",
+          className
+        )}
+        {...props}
+      />
+    </div>
   )
 }
 

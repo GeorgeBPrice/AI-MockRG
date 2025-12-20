@@ -12,16 +12,18 @@ export default async function EventsDashboard() {
   }
   
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Generator Requests Log</h1>
-          <p className="text-muted-foreground">
-            A log of your mock-record-generation requests
-          </p>
-        </div>
+        <section className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Log</p>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold leading-tight">Generator Requests Log</h1>
+            <p className="text-sm text-muted-foreground max-w-3xl">
+              A log of your mock-record-generation requests
+            </p>
+          </div>
+        </section>
       </div>
-
       <EventsList />
     </div>
   );
