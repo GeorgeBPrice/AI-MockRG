@@ -57,7 +57,7 @@ curl -X POST https://our-server-domain/api/v1/generate \
     "schema": "CREATE TABLE customers (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(255)); CREATE TABLE orders (id INT PRIMARY KEY, customer_id INT, total_amount DECIMAL(10,2), FOREIGN KEY (customer_id) REFERENCES customers(id))",
     "count": 8,
     "format": "json",
-    "additionalInstructions": "Generate realistic customer and order data with proper relationships"
+    "examples": "Customers with realistic names and email addresses; orders with positive totals"
   }'
 ```
 
@@ -86,8 +86,8 @@ curl -X POST https://our-server-domain/api/v1/generate \
     "count": 20,
     "format": "xml",
     "temperature": 0.8,
-    "maxTokens": 6000,
-    "additionalInstructions": "Generate diverse event data with realistic titles and descriptions"
+    "maxTokens": 4000,
+    "examples": "Event records with conferences, workshops, and meetups"
   }'
 ```
 

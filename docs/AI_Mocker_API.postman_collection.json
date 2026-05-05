@@ -44,7 +44,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schema\": \"CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(255), created_at TIMESTAMP)\",\n  \"schemaType\": \"sql\",\n  \"count\": 5,\n  \"format\": \"json\",\n  \"additionalInstructions\": \"Generate realistic user data with proper email formats\"\n}"
+              "raw": "{\n  \"schema\": \"CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(255), created_at TIMESTAMP)\",\n  \"schemaType\": \"sql\",\n  \"count\": 5,\n  \"format\": \"json\",\n  \"examples\": \"Users with realistic names and email addresses\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/generate",
@@ -67,7 +67,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schema\": \"CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(100), price DECIMAL(10,2), category VARCHAR(50))\",\n  \"schemaType\": \"sql\",\n  \"count\": 10,\n  \"format\": \"csv\",\n  \"additionalInstructions\": \"Generate diverse product data with realistic prices and categories\"\n}"
+              "raw": "{\n  \"schema\": \"CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(100), price DECIMAL(10,2), category VARCHAR(50))\",\n  \"schemaType\": \"sql\",\n  \"count\": 10,\n  \"format\": \"csv\",\n  \"examples\": \"Products with realistic prices across multiple categories\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/generate",
@@ -90,7 +90,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schema\": \"CREATE TABLE orders (order_id VARCHAR(20), customer_id INT, total_amount DECIMAL(10,2), order_date DATE, status VARCHAR(20))\",\n  \"schemaType\": \"sql\",\n  \"count\": 15,\n  \"format\": \"sql\",\n  \"additionalInstructions\": \"Generate realistic order data with proper date formats and status values like pending, shipped, delivered\"\n}"
+              "raw": "{\n  \"schema\": \"CREATE TABLE orders (order_id VARCHAR(20), customer_id INT, total_amount DECIMAL(10,2), order_date DATE, status VARCHAR(20))\",\n  \"schemaType\": \"sql\",\n  \"count\": 15,\n  \"format\": \"sql\",\n  \"examples\": \"Orders with statuses like pending, shipped, delivered\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/generate",
@@ -113,7 +113,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schema\": \"CREATE TABLE customers (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(255), age INT, phone VARCHAR(20), address TEXT, created_at TIMESTAMP, is_active BOOLEAN); CREATE TABLE orders (id INT PRIMARY KEY, customer_id INT, order_date DATE, total_amount DECIMAL(10,2), status ENUM('pending', 'shipped', 'delivered', 'cancelled'), FOREIGN KEY (customer_id) REFERENCES customers(id))\",\n  \"schemaType\": \"sql\",\n  \"count\": 8,\n  \"format\": \"json\",\n  \"examples\": \"Sample customer data with realistic names, ages, and contact information\",\n  \"additionalInstructions\": \"Generate realistic customer and order data with proper relationships and constraints\"\n}"
+              "raw": "{\n  \"schema\": \"CREATE TABLE customers (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(255), age INT, phone VARCHAR(20), address TEXT, created_at TIMESTAMP, is_active BOOLEAN); CREATE TABLE orders (id INT PRIMARY KEY, customer_id INT, order_date DATE, total_amount DECIMAL(10,2), status ENUM('pending', 'shipped', 'delivered', 'cancelled'), FOREIGN KEY (customer_id) REFERENCES customers(id))\",\n  \"schemaType\": \"sql\",\n  \"count\": 8,\n  \"format\": \"json\",\n  \"examples\": \"Sample customer data with realistic names, ages, and contact information; orders linked to customers with positive totals\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/generate",
@@ -136,7 +136,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schema\": \"{\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"name\\\": {\\\"type\\\": \\\"string\\\"}, \\\"age\\\": {\\\"type\\\": \\\"integer\\\", \\\"minimum\\\": 18, \\\"maximum\\\": 65}, \\\"email\\\": {\\\"type\\\": \\\"string\\\", \\\"format\\\": \\\"email\\\"}, \\\"department\\\": {\\\"type\\\": \\\"string\\\", \\\"enum\\\": [\\\"engineering\\\", \\\"marketing\\\", \\\"sales\\\", \\\"hr\\\"]}}}\",\n  \"schemaType\": \"nosql\",\n  \"count\": 12,\n  \"format\": \"json\",\n  \"additionalInstructions\": \"Generate diverse employee data with realistic ages and department assignments\"\n}"
+              "raw": "{\n  \"schema\": \"{\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"name\\\": {\\\"type\\\": \\\"string\\\"}, \\\"age\\\": {\\\"type\\\": \\\"integer\\\", \\\"minimum\\\": 18, \\\"maximum\\\": 65}, \\\"email\\\": {\\\"type\\\": \\\"string\\\", \\\"format\\\": \\\"email\\\"}, \\\"department\\\": {\\\"type\\\": \\\"string\\\", \\\"enum\\\": [\\\"engineering\\\", \\\"marketing\\\", \\\"sales\\\", \\\"hr\\\"]}}}\",\n  \"schemaType\": \"nosql\",\n  \"count\": 12,\n  \"format\": \"json\",\n  \"examples\": \"Employees with realistic ages spread across the four departments\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/generate",
@@ -159,7 +159,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schema\": \"{\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"id\\\": {\\\"type\\\": \\\"string\\\"}, \\\"user\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"name\\\": {\\\"type\\\": \\\"string\\\"}, \\\"email\\\": {\\\"type\\\": \\\"string\\\", \\\"format\\\": \\\"email\\\"}, \\\"preferences\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"theme\\\": {\\\"type\\\": \\\"string\\\", \\\"enum\\\": [\\\"light\\\", \\\"dark\\\"]}, \\\"notifications\\\": {\\\"type\\\": \\\"boolean\\\"}}}}}, \\\"orders\\\": {\\\"type\\\": \\\"array\\\", \\\"items\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"orderId\\\": {\\\"type\\\": \\\"string\\\"}, \\\"amount\\\": {\\\"type\\\": \\\"number\\\", \\\"minimum\\\": 0}, \\\"items\\\": {\\\"type\\\": \\\"array\\\", \\\"items\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"productId\\\": {\\\"type\\\": \\\"string\\\"}, \\\"quantity\\\": {\\\"type\\\": \\\"integer\\\", \\\"minimum\\\": 1}, \\\"price\\\": {\\\"type\\\": \\\"number\\\", \\\"minimum\\\": 0}}}}}}}}}}\",\n  \"schemaType\": \"nosql\",\n  \"count\": 6,\n  \"format\": \"json\",\n  \"additionalInstructions\": \"Generate complex user data with nested objects and arrays representing user profiles with order history\"\n}"
+              "raw": "{\n  \"schema\": \"{\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"id\\\": {\\\"type\\\": \\\"string\\\"}, \\\"user\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"name\\\": {\\\"type\\\": \\\"string\\\"}, \\\"email\\\": {\\\"type\\\": \\\"string\\\", \\\"format\\\": \\\"email\\\"}, \\\"preferences\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"theme\\\": {\\\"type\\\": \\\"string\\\", \\\"enum\\\": [\\\"light\\\", \\\"dark\\\"]}, \\\"notifications\\\": {\\\"type\\\": \\\"boolean\\\"}}}}}, \\\"orders\\\": {\\\"type\\\": \\\"array\\\", \\\"items\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"orderId\\\": {\\\"type\\\": \\\"string\\\"}, \\\"amount\\\": {\\\"type\\\": \\\"number\\\", \\\"minimum\\\": 0}, \\\"items\\\": {\\\"type\\\": \\\"array\\\", \\\"items\\\": {\\\"type\\\": \\\"object\\\", \\\"properties\\\": {\\\"productId\\\": {\\\"type\\\": \\\"string\\\"}, \\\"quantity\\\": {\\\"type\\\": \\\"integer\\\", \\\"minimum\\\": 1}, \\\"price\\\": {\\\"type\\\": \\\"number\\\", \\\"minimum\\\": 0}}}}}}}}}}\",\n  \"schemaType\": \"nosql\",\n  \"count\": 6,\n  \"format\": \"json\",\n  \"examples\": \"Nested user profiles with light/dark theme preferences and a varied order history\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/generate",
@@ -182,7 +182,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"schema\": \"CREATE TABLE events (id INT PRIMARY KEY, title VARCHAR(200), description TEXT, start_date TIMESTAMP, end_date TIMESTAMP, location VARCHAR(255), capacity INT, price DECIMAL(8,2))\",\n  \"schemaType\": \"sql\",\n  \"count\": 20,\n  \"format\": \"xml\",\n  \"examples\": \"Sample event data with conferences, workshops, and meetups\",\n  \"additionalInstructions\": \"Generate diverse event data with realistic titles, descriptions, and pricing\",\n  \"temperature\": 0.8,\n  \"maxTokens\": 6000\n}"
+              "raw": "{\n  \"schema\": \"CREATE TABLE events (id INT PRIMARY KEY, title VARCHAR(200), description TEXT, start_date TIMESTAMP, end_date TIMESTAMP, location VARCHAR(255), capacity INT, price DECIMAL(8,2))\",\n  \"schemaType\": \"sql\",\n  \"count\": 20,\n  \"format\": \"xml\",\n  \"examples\": \"Sample event data with conferences, workshops, and meetups\",\n  \"temperature\": 0.8,\n  \"maxTokens\": 4000\n}"
             },
             "url": {
               "raw": "{{base_url}}/generate",

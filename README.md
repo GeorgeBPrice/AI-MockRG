@@ -2,7 +2,7 @@
 
 A powerful tool for generating realistic mock data using AI LLMs.
 
-## New in v1.2.0: Template & UI overhaul
+## New in v1.3.0: Template & UI overhaul
 
 **Enhanced UX, templates, and event analytics**
 
@@ -35,6 +35,23 @@ curl -X POST https://the-apps-domain.com/api/v1/generate \
 - Keys are only transmitted to our server during mock data generation requests
 - Keys are never permanently stored on our servers, and are processed in memmory only
 - Note: clearing your browser, or using the option in settings to delete your data will remove your stored API keys
+
+## AI Prompt & Proxy Hardening
+
+The generation endpoints (`/api/generate` and `/api/v1/generate`) are hardened against prompt-injection, jailbreak, off-topic abuse, SSRF, and quota-drain attacks. Highlights:
+
+- **Hardened system prompt** declares the only allowed task and instructs the model to refuse off-topic requests with a sentinel that the server converts into a `422` (and does **not** charge against your daily quota).
+- **Tag-delimited user fields** (`<SCHEMA>`, `<EXAMPLES>`, `<INSTRUCTIONS>`) with role-injection markers (`<|im_start|>`, `### System:`, etc.) stripped before interpolation.
+- **Pre-flight intent check** rejects clearly off-topic or jailbreak phrasing in `examples` (and `additionalInstructions` on the web UI) before any LLM call is made. The `schema` field is intentionally permissive — informal column lists like `"name, age, dob, address"` are still accepted.
+- **Length & token caps:** `schema ≤ 8 KB`, `examples ≤ 4 KB`, `maxTokens ≤ 8000`, model output truncated to 200 KB.
+- **SSRF guard:** `overrideBaseUrl` / `overrideHeaders` only honoured when paired with a user-supplied `overrideApiKey`.
+- **Per-IP daily bucket** for anonymous callers (replaces the previous shared `'anonymous'` bucket).
+- **Concurrency cap:** max 2 in-flight generations per identity (per-user, per-IP, or per-API-key).
+- **`additionalInstructions` is BYO-key only** — removed entirely from the public `/api/v1/generate` contract; on the web UI the field is disabled until the user toggles "Use My API Key" and saves a key in Settings.
+
+Full audit and merge-request notes:
+- [Prompt Security Audit](Development%20Docs/Security/AI_PROMPT_SECURITY_AUDIT.md)
+- [Security Hardening MR](Development%20Docs/Security/Security_Merge_Request.md)
 
 ## Supported AI Providers
 
