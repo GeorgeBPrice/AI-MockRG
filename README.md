@@ -2,15 +2,20 @@
 
 A powerful tool for generating realistic mock data using AI LLMs.
 
-## New in v1.3.0: Template & UI overhaul
+## New in v1.3.0: Prompt & Proxy Security Hardening
 
-**Enhanced UX, templates, and event analytics**
+**Defence-in-depth for the generation endpoints**
 
-- Dedicated **Templates page** with searchable categories, SQL/NoSQL toggles, and generator injection
-- Modal template browser using gradient CTAs, skeleton loaders, and dual-schema cards that prefill the generator
-- Refreshed **Generator UI**: skeleton loaders, progress/cancel controls, CTA gradient utilities, and repositioned save/reset controls
-- **Events dashboard table** with filters plus portrait jsPDF export for auditing
-- Unified dark theme and CSS overhual, nav/footer polish, and consistent CTA styles
+- Hardened **system prompt** with off-topic refusal sentinel — refusals return `422` and don't consume your daily quota
+- **Tag-delimited** user fields (`<SCHEMA>`, `<EXAMPLES>`, `<INSTRUCTIONS>`) with role-injection markers stripped before interpolation
+- **Pre-flight intent check** rejects jailbreak phrases and clearly off-topic verbs in `examples` (and `additionalInstructions` on the web UI) before any LLM call
+- **Length & token caps** (`schema ≤ 8 KB`, `examples ≤ 4 KB`, `maxTokens ≤ 8000`) and a 200 KB output cap
+- **SSRF guard** on the web endpoint — `overrideBaseUrl` / `overrideHeaders` only honoured when paired with a user-supplied API key
+- **Per-IP daily bucket** for anonymous callers (no more shared `'anonymous'` bucket)
+- **Concurrency cap:** max 2 in-flight generations per identity (Redis-backed, fails open)
+- `additionalInstructions` is **BYO-key only** and removed entirely from the public `/api/v1/generate` contract
+- New **Privacy Policy** page (`/privacy`) covering API key handling, rate-limit identifiers, and data retention
+- Friendlier **UI error messages** that explain `400` / `422` / `429` outcomes without leaking the matched filter
 
 ### Simplest Quick Start with External API
 
@@ -233,6 +238,20 @@ npm run test:critical
 ```
 
 ## Releases
+
+### v1.3.0 - Prompt & proxy security hardening
+- **Prompt hardening**: rewritten system prompt with off-topic refusal sentinel; user-supplied fields wrapped in `<SCHEMA>` / `<EXAMPLES>` / `<INSTRUCTIONS>` tags; role-injection markers (`<|im_start|>`, `### System:` etc.) stripped from inputs
+- **Pre-flight intent check**: regex denylist of jailbreak phrases and off-topic verbs applied to `examples` and (web-only) `additionalInstructions`. `schema` left intentionally permissive — informal column lists like `"name, age, dob, address"` still work
+- **Length & token caps**: `schema ≤ 8 KB`, `examples ≤ 4 KB`, `additionalInstructions ≤ 1 KB`, `maxTokens ≤ 8000`, 200 KB output ceiling
+- **SSRF / key-exfil guard**: `/api/generate`'s `overrideBaseUrl` and `overrideHeaders` now require a user-supplied `overrideApiKey`
+- **Per-IP daily bucket** for anonymous traffic (replaces the previous shared `'anonymous'` identifier)
+- **Concurrency cap**: 2 in-flight generations per user / per-IP / per-API-key, Redis-backed with fail-open
+- **`additionalInstructions` scoped to BYO-key**: removed entirely from the public `/api/v1/generate` contract; web UI disables the field with a context-aware helper note when not BYO-key
+- **Output gate**: off-topic sentinel converted to `422` (not charged against quota); v1 SQL output rejected if it contains `DROP`/`UPDATE`/`DELETE`/`ALTER`/`TRUNCATE`/`GRANT`/`REVOKE`/`CREATE USER`/`EXEC`
+- **Gemini fix**: Gemini calls now use the dedicated `system_instruction` field instead of fusing system+user into a single text part
+- **Friendlier UI errors**: status-aware toasts for `400` / `422` / `429` that guide the user without leaking the matched filter
+- **Privacy Policy** page added at `/privacy` covering API key handling, rate-limit identifiers, and retention
+- **Documentation**: `docs/EXTERNAL_API.md`, `docs/API_EXAMPLES.md`, and the Postman collection updated for the new contract; full audit and MR notes in [Development Docs/Security/](Development%20Docs/Security/)
 
 ### v1.2.0 - UI, templates, and analytics
 - **Templates catalogue**: Dedicated templates page + modal picker with SQL/NoSQL toggle, dual-schema data, and generator injection
