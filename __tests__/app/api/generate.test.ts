@@ -8,6 +8,9 @@ const mockJson = jest.fn();
 jest.mock("next/server", () => ({
   NextRequest: jest.fn().mockImplementation((body) => ({
     json: () => Promise.resolve(body || {}),
+    // Headers map used by the route to derive an anonymous client-IP
+    // identifier for the daily-rate-limit bucket (P0-2 in the audit).
+    headers: new Map([["x-forwarded-for", "127.0.0.1"]]),
   })),
   NextResponse: {
     json: (...args) => {
@@ -19,6 +22,14 @@ jest.mock("next/server", () => ({
       };
     },
   },
+}));
+
+// Concurrency cap is Redis-backed and fails open on the missing connection,
+// but mocking it keeps the test output free of "Redis unavailable" warnings.
+jest.mock("@/lib/concurrency-limit", () => ({
+  acquireSlot: jest.fn().mockResolvedValue({ ok: true }),
+  releaseSlot: jest.fn().mockResolvedValue(undefined),
+  MAX_INFLIGHT_PER_IDENTITY: 2,
 }));
 
 // Mock dependencies
@@ -78,9 +89,11 @@ describe("Generate API Route", () => {
       user: { id: "user123", email: "test@example.com" },
     });
 
-    (openai.generateMockData as jest.Mock).mockResolvedValue([
-      { id: 1, name: "Test User", email: "test@example.com" },
-    ]);
+    // generateMockData returns a string (the raw model response). The route
+    // passes this through isOffTopicSentinel, which calls .trim() on it.
+    (openai.generateMockData as jest.Mock).mockResolvedValue(
+      JSON.stringify([{ id: 1, name: "Test User", email: "test@example.com" }])
+    );
 
     (dailyRateLimit.checkDailyLimit as jest.Mock).mockResolvedValue({
       success: true,

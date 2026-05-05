@@ -50,6 +50,12 @@ jest.mock("@/lib/storage", () => ({
   recordGeneration: jest.fn(),
 }));
 
+jest.mock("@/lib/concurrency-limit", () => ({
+  acquireSlot: jest.fn().mockResolvedValue({ ok: true }),
+  releaseSlot: jest.fn().mockResolvedValue(undefined),
+  MAX_INFLIGHT_PER_IDENTITY: 2,
+}));
+
 describe("External API Generate Endpoint", () => {
   const mockAuthContext = {
     userId: "user123",
@@ -202,9 +208,11 @@ describe("External API Generate Endpoint", () => {
   });
 
   it("should handle optional parameters", async () => {
+    // additionalInstructions is intentionally NOT part of the public v1
+    // contract any more (P3-2 in the security audit) — it's silently dropped
+    // by zod and never forwarded to generateMockData.
     const request = createRequest({
       examples: "Example data",
-      additionalInstructions: "Make it realistic",
       temperature: 0.8,
       maxTokens: 2000,
     });
@@ -216,15 +224,16 @@ describe("External API Generate Endpoint", () => {
 
     expect(responseData.success).toBe(true);
 
-    // Verify the generation was called with optional parameters
     expect(openai.generateMockData).toHaveBeenCalledWith(
       expect.objectContaining({
         examples: "Example data",
-        additionalInstructions: "Make it realistic",
         temperature: 0.8,
         maxTokens: 2000,
       })
     );
+    // Confirm the field really is dropped, not just missing from the assertion.
+    const callArg = (openai.generateMockData as jest.Mock).mock.calls[0][0];
+    expect(callArg).not.toHaveProperty("additionalInstructions");
   });
 
   it("should handle generation errors gracefully", async () => {
@@ -301,13 +310,13 @@ describe("External API Generate Endpoint", () => {
 
     expect(response.status).toBe(200);
 
-    // Verify default values were used
+    // P2-4: default maxTokens lowered to 2000 on the public endpoint.
     expect(openai.generateMockData).toHaveBeenCalledWith(
       expect.objectContaining({
         schemaType: "sql",
         format: "json",
         temperature: 0.7,
-        maxTokens: 4000,
+        maxTokens: 2000,
       })
     );
   });
