@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Database, Github, ArrowRight, GitBranch, Bot } from "lucide-react";
+import { Database, ArrowRight, GitBranch, Bot } from "lucide-react";
 
 export default function Home() {
   return (
