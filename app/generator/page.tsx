@@ -19,6 +19,7 @@ import ResultsViewer from "@/components/results/results-viewer";
 import ResultsSkeleton from "@/components/ui/results-skeleton";
 import Skeleton from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
+import { friendlyGenerationError } from "@/lib/generator-errors";
 import { SaveSchemaDialog } from "@/components/generator/save-schema-dialog";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -566,18 +567,19 @@ function GeneratorPageContent() {
 
         if (!response.ok) {
           let errorMsg = `Error ${response.status}: ${response.statusText}`;
+          let errorTitle = `Generation Failed (${response.status})`;
 
           try {
             const errorData = await response.json();
-            if (errorData && errorData.message) {
-              errorMsg = errorData.message;
-            }
+            const friendly = friendlyGenerationError(response.status, errorData);
+            errorTitle = friendly.title;
+            errorMsg = friendly.description;
           } catch (parseError) {
             console.error("Failed to parse error response:", parseError);
           }
 
           toast({
-            title: `Generation Failed (${response.status})`,
+            title: errorTitle,
             description: errorMsg,
             variant: "destructive",
             action:
@@ -889,6 +891,26 @@ function GeneratorPageContent() {
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
+                  {session && (
+                    <Button
+                      variant="outline"
+                      size="default"
+                      onClick={() => setSaveDialogOpen(true)}
+                      disabled={
+                        isGenerating ||
+                        (schemaType !== "sample" && !schema.trim()) ||
+                        (schemaType === "sample" && !examples.trim())
+                      }
+                    >
+                      <Save className="mr-2 h-5 w-5" />
+                      {schemaName
+                        ? "Save Changes"
+                        : schemaType === "sample"
+                        ? "Save Examples"
+                        : "Save New Schema"
+                      }
+                    </Button>
+                  )}
                   {loadSavedAction}
                   <TemplatePicker
                     triggerLabel="Browse Templates"
@@ -952,27 +974,6 @@ function GeneratorPageContent() {
                   )}
                   {isGenerating ? "Generating..." : "Generate Mock Records"}
                 </Button>
-
-                {session && (
-                  <Button
-                    variant="outline"
-                    size="default"
-                    onClick={() => setSaveDialogOpen(true)}
-                    disabled={
-                      isGenerating ||
-                      (schemaType !== "sample" && !schema.trim()) ||
-                      (schemaType === "sample" && !examples.trim())
-                    }
-                  >
-                    <Save className="mr-2 h-5 w-5" />
-                    {schemaName
-                      ? "Save Changes"
-                      : schemaType === "sample"
-                      ? "Save Examples"
-                      : "Save New Schema"
-                    }
-                  </Button>
-                )}
               </div>
             </Card>
           </div>

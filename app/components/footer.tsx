@@ -12,6 +12,13 @@ export function Footer() {
           >
             Terms of Use
           </Link>
+          {" · "}
+          <Link
+            href="/privacy"
+            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-primary"
+          >
+            Privacy Policy
+          </Link>
         </p>
       </div>
     </footer>

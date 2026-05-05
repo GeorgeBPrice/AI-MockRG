@@ -50,14 +50,17 @@ describe('Mock Data Generation', () => {
         model: 'gpt-3.5-turbo',
       });
 
-      // Verify OpenAI usage
+      // System prompt was rewritten in the prompt-security audit (P1-1):
+      // it now declares the task exclusively and references the user's
+      // ${schemaType.toUpperCase()} schema, rather than the old
+      // "SQL schema definitions" wording.
       expect(mockCreateMethod).toHaveBeenCalledWith(expect.objectContaining({
         model: 'gpt-3.5-turbo',
         temperature: 0.5,
         messages: expect.arrayContaining([
           expect.objectContaining({
             role: 'system',
-            content: expect.stringContaining('SQL schema definitions'),
+            content: expect.stringContaining('SQL schema'),
           }),
           expect.objectContaining({
             role: 'user',
@@ -107,14 +110,14 @@ describe('Mock Data Generation', () => {
         temperature: 0.7,
       });
 
-      // Verify the API was called with correct parameters
+      // P1-1 system prompt uses ${schemaType.toUpperCase()} → "NOSQL".
       expect(mockCreateMethod).toHaveBeenCalledWith(expect.objectContaining({
         model: 'gpt-4',
         temperature: 0.7,
         messages: expect.arrayContaining([
           expect.objectContaining({
             role: 'system',
-            content: expect.stringContaining('NoSQL schema definitions'),
+            content: expect.stringContaining('NOSQL schema'),
           }),
           expect.objectContaining({
             role: 'user',

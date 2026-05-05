@@ -23,12 +23,6 @@ export default function Home() {
           </Link>
         </Button>
         <Button size="lg" variant="outline" asChild>
-          <Link
-            href="https://github.com/GeorgeBPrice/AI-MockRG"
-            target="_blank"
-          >
-            <Github className="mr-2 h-4 w-4" /> Open Source in GitHub
-          </Link>
         </Button>
       </div>
 
@@ -51,7 +45,7 @@ export default function Home() {
         </div>
         <div className="flex flex-col items-center text-center p-6 border rounded-lg">
           <GitBranch className="h-10 w-10 mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Free & Open Source</h3>
+          <h3 className="text-xl font-semibold mb-2">Free</h3>
           <p className="text-muted-foreground">
           Limited free usage available, or completely free-to-use with your own API key. 
           </p>

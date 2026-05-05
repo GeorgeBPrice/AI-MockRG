@@ -35,6 +35,7 @@ Authorization: Bearer YOUR_API_KEY_HERE
 - **Free Tier:** 5 generations per day
 - **Rate Limit Headers:** All responses include rate limit information
 - **Rate Limit Reset:** Daily at midnight UTC
+- **Concurrency cap:** Max 2 in-flight generations per API key. A third concurrent request returns `429` with `reason: "concurrency_limit"`.
 
 ### Rate Limit Headers
 
@@ -43,6 +44,18 @@ X-RateLimit-Limit: 5
 X-RateLimit-Remaining: 3
 X-RateLimit-Reset: 1704067200
 ```
+
+## Request Validation & Abuse Prevention
+
+The API is a structured mock-data generator, not a general-purpose LLM endpoint. Requests are validated before they reach the model:
+
+- **Length caps:** `schema ≤ 8 KB`, `examples ≤ 4 KB`. Requests exceeding these caps return `400`.
+- **`maxTokens` ceiling:** `8000` (lowered from 100000). Requests above this return `400`.
+- **Pre-flight intent check:** the `examples` field is scanned for jailbreak phrases (e.g. "ignore previous instructions", "you are now...", "developer mode") and clearly off-topic verbs ("write a poem", "translate", "summarise", "give me advice"). Matching requests return `400` with `field` and `reason`.
+- **Off-topic refusal:** if the model determines the request is not a coherent ask for synthetic mock records, it refuses. The API converts the refusal into a `422` and **does not** charge it against your daily quota.
+- **SQL safety:** generated SQL output containing `DROP`, `UPDATE`, `DELETE`, `ALTER`, `TRUNCATE`, `GRANT`, `REVOKE`, `CREATE USER`, or `EXEC` is rejected with `422`.
+
+> **Note:** the `additionalInstructions` field that previously existed in this contract has been removed from the public API. If you submit it, it is silently ignored. To pass freeform instructions to the model, use the web interface with your own AI provider key.
 
 ## Endpoints
 
@@ -61,24 +74,24 @@ Generate mock data based on a schema definition.
   "count": 10,
   "format": "json",
   "examples": "Example user data",
-  "additionalInstructions": "Make the data realistic with proper email formats",
   "temperature": 0.7,
-  "maxTokens": 4000
+  "maxTokens": 2000
 }
 ```
 
 #### Parameters
 
-| Parameter                | Type   | Required | Default  | Description                                                           |
-| ------------------------ | ------ | -------- | -------- | --------------------------------------------------------------------- |
-| `schema`                 | string | ✅       | -        | SQL schema or JSON schema definition                                  |
-| `schemaType`             | string | ❌       | `"sql"`  | Schema type: `"sql"` or `"nosql"`                                     |
-| `count`                  | number | ❌       | `10`     | Number of records to generate (1-100)                                 |
-| `format`                 | string | ❌       | `"json"` | Output format: `"json"`, `"csv"`, `"sql"`, `"xml"`, `"html"`, `"txt"` |
-| `examples`               | string | ❌       | -        | Example data to guide generation                                      |
-| `additionalInstructions` | string | ❌       | -        | Additional instructions for the AI                                    |
-| `temperature`            | number | ❌       | `0.7`    | AI creativity level (0.0-2.0)                                         |
-| `maxTokens`              | number | ❌       | `4000`   | Maximum tokens for generation (100-100000)                            |
+| Parameter     | Type   | Required | Default  | Description                                                           |
+| ------------- | ------ | -------- | -------- | --------------------------------------------------------------------- |
+| `schema`      | string | ✅       | -        | SQL schema or JSON schema definition (max 8 KB)                       |
+| `schemaType`  | string | ❌       | `"sql"`  | Schema type: `"sql"` or `"nosql"`                                     |
+| `count`       | number | ❌       | `10`     | Number of records to generate (1-100)                                 |
+| `format`      | string | ❌       | `"json"` | Output format: `"json"`, `"csv"`, `"sql"`, `"xml"`, `"html"`, `"txt"` |
+| `examples`    | string | ❌       | -        | Example data to guide generation (max 4 KB)                           |
+| `temperature` | number | ❌       | `0.7`    | AI creativity level (0.0-2.0)                                         |
+| `maxTokens`   | number | ❌       | `2000`   | Maximum tokens for generation (100-8000)                              |
+
+> The `additionalInstructions` field is no longer accepted on this endpoint. See **Request Validation & Abuse Prevention** above.
 
 #### Response Format
 
@@ -125,6 +138,22 @@ The `result` field contains clean data without explanatory text or markdown form
 }
 ```
 
+**Error Response (400) - Pre-flight Intent Check**
+
+Returned when `examples` contains jailbreak phrases or clearly off-topic verbs.
+
+```json
+{
+  "success": false,
+  "error": "Request rejected: examples contains a phrase that looks like a prompt-injection attempt. This service only generates synthetic mock records.",
+  "field": "examples",
+  "reason": "jailbreak_phrase",
+  "usage": { "limit": 5, "remaining": 4, "resetTimestamp": 1704067200 }
+}
+```
+
+`reason` will be `"jailbreak_phrase"` or `"off_topic"`.
+
 **Error Response (401) - Authentication Error**
 
 ```json
@@ -132,6 +161,32 @@ The `result` field contains clean data without explanatory text or markdown form
   "success": false,
   "error": "Invalid or missing API key",
   "message": "Please provide a valid API key in the Authorization header"
+}
+```
+
+**Error Response (422) - Off-topic Refusal**
+
+Returned when the model declines the request as not a coherent mock-data ask. **Not** charged against your daily quota.
+
+```json
+{
+  "success": false,
+  "error": "The request was not recognised as a mock-data generation task and was refused.",
+  "reason": "off_topic_refusal",
+  "usage": { "limit": 5, "remaining": 4, "resetTimestamp": 1704067200 }
+}
+```
+
+**Error Response (422) - Disallowed SQL**
+
+Returned when the generated SQL output contains statements other than `INSERT` (e.g. `DROP`, `UPDATE`, `DELETE`, `ALTER`).
+
+```json
+{
+  "success": false,
+  "error": "Generated SQL contained disallowed statements (DROP/UPDATE/DELETE/ALTER/...). Refusing to return.",
+  "reason": "sql_dangerous_statement",
+  "usage": { "limit": 5, "remaining": 4, "resetTimestamp": 1704067200 }
 }
 ```
 
@@ -146,6 +201,18 @@ The `result` field contains clean data without explanatory text or markdown form
     "remaining": 0,
     "resetTimestamp": 1704067200
   }
+}
+```
+
+**Error Response (429) - Concurrency Limit**
+
+Returned when the same API key has 2 generations already in flight.
+
+```json
+{
+  "success": false,
+  "error": "Too many concurrent generations. Limit is 2 in-flight per API key.",
+  "reason": "concurrency_limit"
 }
 ```
 
@@ -262,8 +329,7 @@ curl -X POST https://our-server-domain/api/v1/generate \
     "schemaType": "nosql",
     "count": 10,
     "format": "csv",
-    "examples": "Sample user data with realistic names and ages",
-    "additionalInstructions": "Generate diverse data with various age ranges and realistic email addresses"
+    "examples": "Sample user data with realistic names and ages"
   }'
 ```
 
@@ -278,8 +344,8 @@ curl -X POST https://our-server-domain/api/v1/generate \
     "count": 20,
     "format": "sql",
     "temperature": 0.8,
-    "maxTokens": 6000,
-    "additionalInstructions": "Generate realistic order data with proper date formats and status values like pending, shipped, delivered"
+    "maxTokens": 4000,
+    "examples": "Order records with status values like pending, shipped, delivered"
   }'
 ```
 
@@ -301,9 +367,8 @@ const generateMockData = async (apiKey, schema, options = {}) => {
       count: options.count || 10,
       format: options.format || "json",
       examples: options.examples,
-      additionalInstructions: options.additionalInstructions,
       temperature: options.temperature || 0.7,
-      maxTokens: options.maxTokens || 4000,
+      maxTokens: options.maxTokens || 2000,
     }),
   });
 
@@ -324,7 +389,7 @@ try {
     {
       count: 5,
       format: "json",
-      additionalInstructions: "Generate realistic user data",
+      examples: "Realistic names and email addresses",
     }
   );
 
@@ -398,9 +463,8 @@ def generate_mock_data(api_key, schema, **options):
         "count": options.get("count", 10),
         "format": options.get("format", "json"),
         "examples": options.get("examples"),
-        "additionalInstructions": options.get("additionalInstructions"),
         "temperature": options.get("temperature", 0.7),
-        "maxTokens": options.get("maxTokens", 4000)
+        "maxTokens": options.get("maxTokens", 2000)
     }
 
     response = requests.post(url, headers=headers, json=payload)
@@ -418,7 +482,7 @@ try:
         "CREATE TABLE customers (id INT, name VARCHAR(100), email VARCHAR(255), age INT)",
         count=5,
         format="json",
-        additionalInstructions="Generate realistic customer data with proper email formats"
+        examples="Realistic customer rows with varied ages"
     )
 
     print("Generated data:", json.loads(result["result"]))
@@ -574,12 +638,13 @@ INSERT INTO users (id, name, email, created_at) VALUES
 
 ### Common Error Codes
 
-| Status Code | Description           | Solution                                                       |
-| ----------- | --------------------- | -------------------------------------------------------------- |
-| 400         | Bad Request           | Check request body format and required fields                  |
-| 401         | Unauthorized          | Verify API key is correct and included in Authorization header |
-| 429         | Too Many Requests     | Wait for rate limit reset or upgrade your plan                 |
-| 500         | Internal Server Error | Retry the request or contact support                           |
+| Status Code | Description                  | Solution                                                       |
+| ----------- | ---------------------------- | -------------------------------------------------------------- |
+| 400         | Bad Request / Invalid Input  | Check body shape, length caps, and that `examples` does not contain off-topic or jailbreak phrases |
+| 401         | Unauthorized                 | Verify API key is correct and included in Authorization header |
+| 422         | Off-topic / Disallowed Output| Rephrase the request as a clear mock-data ask. Off-topic refusals do not consume daily quota |
+| 429         | Too Many Requests            | Wait for rate limit reset, or wait for an in-flight generation to finish (concurrency cap) |
+| 500         | Internal Server Error        | Retry the request or contact support                           |
 
 ### Best Practices
 

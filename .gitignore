@@ -75,3 +75,9 @@ yarn-error.log*
 next-env.d.ts
 .vercel
 .env*.local
+
+# Claude settings
+.claude/
+
+# Development Docs
+Development Docs/
