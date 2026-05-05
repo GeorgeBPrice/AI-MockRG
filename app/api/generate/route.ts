@@ -5,7 +5,33 @@ import { authOptions } from "@/lib/auth";
 import { recordGeneration } from "@/lib/storage";
 import { recordGenerationEvent, recordUserActivity } from "@/lib/events";
 import { checkDailyLimit, incrementDailyUsage } from "@/lib/daily-rate-limit";
-// Note: No longer importing getUserAiSettings as we'll use localStorage functionality
+import {
+  checkUserInput,
+  isOffTopicSentinel,
+} from "@/lib/prompt-security";
+import {
+  acquireSlot,
+  releaseSlot,
+  MAX_INFLIGHT_PER_IDENTITY,
+} from "@/lib/concurrency-limit";
+import { z } from "zod";
+
+const internalGenerateSchema = z.object({
+  schema: z.string().min(1, "Schema is required").max(8192),
+  schemaType: z.enum(["sql", "nosql"]).optional(),
+  count: z.union([z.number(), z.string()]).optional(),
+  format: z.string().max(32).optional(),
+  examples: z.string().max(4096).optional(),
+  additionalInstructions: z.string().max(1024).optional(),
+  overrideModel: z.string().max(128).optional(),
+  overrideApiKey: z.string().max(512).optional(),
+  overrideBaseUrl: z.string().url().max(512).optional(),
+  overrideTemperature: z.number().min(0).max(2).optional(),
+  overrideMaxTokens: z.number().int().min(1).max(8000).optional(),
+  overrideHeaders: z.record(z.string(), z.string()).optional(),
+  useUserSettings: z.boolean().optional(),
+  schemaId: z.string().optional(),
+});
 
 /**
  * API route handler for generating mock data
@@ -14,14 +40,19 @@ import { checkDailyLimit, incrementDailyUsage } from "@/lib/daily-rate-limit";
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get user session or default to anonymous
+    // Get user session
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id || 'anonymous';
-    const userEmail = session?.user?.email || 'anonymous';
-    const schemaName = session?.user ? undefined : 'Anonymous Generation';
 
-    // Parse request body
-    const body = await request.json();
+    // Parse and validate request body
+    const rawBody = await request.json();
+    const parsed = internalGenerateSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request data", details: parsed.error.format() },
+        { status: 400 }
+      );
+    }
+    const body = parsed.data;
     const {
       schema,
       schemaType,
@@ -38,33 +69,69 @@ export async function POST(request: NextRequest) {
       useUserSettings,
     } = body;
 
-    // Determine which API settings to use
-    let finalApiKey, finalModel, finalBaseUrl, finalTemperature, finalMaxTokens, finalHeaders;
-    
-    if (useUserSettings) {
-      // If useUserSettings is true but we can't access localStorage server-side
-      // We should use any provided settings in the request or fall back to env vars
-      finalApiKey = overrideApiKey || process.env.OPENAI_API_KEY;
-      finalModel = overrideModel || process.env.OPENAI_API_DEFAULT_MODEL;
-      finalBaseUrl = overrideBaseUrl || process.env.OPENAI_API_BASE_URL;
-      finalTemperature = overrideTemperature ?? 0.7;
-      finalMaxTokens = overrideMaxTokens ?? 4000;
-      finalHeaders = overrideHeaders || {};
-    } else {
-      // Otherwise use priority: request override > environment variables
-      finalApiKey = overrideApiKey || process.env.OPENAI_API_KEY;
-      finalModel = overrideModel || process.env.OPENAI_API_DEFAULT_MODEL;
-      finalBaseUrl = overrideBaseUrl || process.env.OPENAI_API_BASE_URL;
-      finalTemperature = overrideTemperature ?? 0.7;
-      finalMaxTokens = overrideMaxTokens ?? 4000;
-      finalHeaders = overrideHeaders || {};
+    const hasOwnKey = !!overrideApiKey;
+
+    // additionalInstructions is BYO-key only. Free-tier / server-key callers
+    // can't smuggle freeform instructions to the model.
+    if (!hasOwnKey && additionalInstructions && additionalInstructions.trim()) {
+      return NextResponse.json(
+        {
+          error: "additionalInstructions is only available when using your own API key. Provide overrideApiKey, or remove additionalInstructions from the request.",
+          field: "additionalInstructions",
+          reason: "byo_key_required",
+        },
+        { status: 400 }
+      );
     }
 
-    // Validate required inputs
-    if (!schema) {
-      return NextResponse.json({ error: "Schema is required" }, { status: 400 });
+    // SSRF guard: a caller-chosen baseUrl or headers may only be paired with a
+    // caller-supplied API key. Otherwise the server would forward its own
+    // OPENAI_API_KEY to an attacker-controlled endpoint.
+    if ((overrideBaseUrl || (overrideHeaders && Object.keys(overrideHeaders).length > 0)) && !hasOwnKey) {
+      return NextResponse.json(
+        { error: "overrideBaseUrl and overrideHeaders require a user-supplied overrideApiKey." },
+        { status: 400 }
+      );
     }
-    
+
+    // Pre-flight intent check on free-text fields (P1-3). Schema is left
+    // permissive on purpose — informal "name, age, dob, address" is valid.
+    const intent = checkUserInput({ schema, examples, additionalInstructions });
+    if (!intent.ok) {
+      return NextResponse.json(
+        {
+          error: `Request rejected: ${intent.field} contains ${intent.reason === "jailbreak_phrase" ? "a phrase that looks like a prompt-injection attempt" : "an off-topic request"}. This service only generates synthetic mock records.`,
+          field: intent.field,
+          reason: intent.reason,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Per-IP bucket for anonymous callers so a single shared 'anonymous' identifier
+    // can't be drained by the whole internet. Falls back to 'anonymous' only if no
+    // forwarding header is present (e.g. local dev).
+    const clientIp =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "anonymous";
+
+    const userId = session?.user?.id || `anon:${clientIp}`;
+    const userEmail = session?.user?.email || `anon:${clientIp}`;
+    const schemaName = session?.user ? undefined : 'Anonymous Generation';
+
+    // Resolve effective AI settings: caller overrides win, otherwise env defaults.
+    const finalApiKey = overrideApiKey || process.env.OPENAI_API_KEY;
+    const finalModel = overrideModel || process.env.OPENAI_API_DEFAULT_MODEL || "gpt-4o-mini";
+    const finalBaseUrl = overrideBaseUrl || process.env.OPENAI_API_BASE_URL;
+    const finalTemperature = overrideTemperature ?? 0.7;
+    // P2-4: tighter default for the common no-instructions case. BYO-key
+    // callers can opt-in to higher via overrideMaxTokens (capped at 8000 by zod).
+    const hasInstructions = !!(additionalInstructions && additionalInstructions.trim());
+    const defaultMaxTokens = hasInstructions ? 4000 : 2000;
+    const finalMaxTokens = overrideMaxTokens ?? defaultMaxTokens;
+    const finalHeaders = overrideHeaders || {};
+
     if (!finalApiKey) {
       console.error("API Key Configuration Error: No key found in request body, user settings, or environment variables.");
       return NextResponse.json(
@@ -74,17 +141,21 @@ export async function POST(request: NextRequest) {
     }
     
     // Normalize input parameters
-    const effectiveSchemaType = ["sql", "nosql"].includes(schemaType) ? schemaType : "sql";
+    const effectiveSchemaType: "sql" | "nosql" =
+      schemaType === "nosql" ? "nosql" : "sql";
     const effectiveFormat = format || "json";
-    
+
     // Validate record count (between 1-100)
-    const recordCount = parseInt(count, 10) || 10;
+    const recordCount =
+      typeof count === "number"
+        ? count
+        : parseInt(typeof count === "string" ? count : "", 10) || 10;
     if (isNaN(recordCount) || recordCount < 1 || recordCount > 100) {
       return NextResponse.json({ error: "Record count must be between 1 and 100" }, { status: 400 });
     }
     
     // Check if user has hit their daily generation limit
-    const usesOwnApiKey = !!overrideApiKey && useUserSettings;
+    const usesOwnApiKey = !!overrideApiKey && !!useUserSettings;
     const dailyLimitResult = await checkDailyLimit({
       identifier: userEmail,
       usesOwnApiKey
@@ -99,7 +170,22 @@ export async function POST(request: NextRequest) {
         resetTimestamp: dailyLimitResult.resetTimestamp
       }, { status: 403 });
     }
-    
+
+    // P2-3: per-identity in-flight cap. Stops Postman from firing N parallel
+    // generations and draining the daily quota faster than checkDailyLimit can
+    // react. Identifier mirrors the rate-limit identifier so it covers both
+    // signed-in users and per-IP anonymous callers.
+    const slot = await acquireSlot(userEmail);
+    if (!slot.ok) {
+      return NextResponse.json(
+        {
+          error: `Too many concurrent generations. Limit is ${MAX_INFLIGHT_PER_IDENTITY} in-flight. Wait for an existing request to finish.`,
+          reason: "concurrency_limit",
+        },
+        { status: 429 }
+      );
+    }
+
     // Attempt to validate SQL schema if no examples provided
     if (effectiveSchemaType === "sql" && !examples) {
       try {
@@ -133,7 +219,21 @@ export async function POST(request: NextRequest) {
         maxTokens: finalMaxTokens,
         headers: finalHeaders,
       });
-      
+
+      // Off-topic sentinel: model refused per the system prompt's contract.
+      // Treat as a 422 and DON'T charge it against the daily quota.
+      if (isOffTopicSentinel(result)) {
+        success = false;
+        errorMessage = "off_topic_refusal";
+        return NextResponse.json(
+          {
+            error: "The request was not recognised as a mock-data generation task and was refused. Rephrase your schema/instructions and try again.",
+            reason: "off_topic_refusal",
+          },
+          { status: 422 }
+        );
+      }
+
       // Increment usage counter after successful generation
       if (!usesOwnApiKey) {
         await incrementDailyUsage(userEmail);
@@ -143,6 +243,8 @@ export async function POST(request: NextRequest) {
       errorMessage = (generateError as Error).message;
       throw generateError;
     } finally {
+      // Release the in-flight slot regardless of outcome.
+      await releaseSlot(slot);
       try {
         // Attempt to extract a meaningful schema name from the schema definition
         let extractedSchemaName = schemaName;

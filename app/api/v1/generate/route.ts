@@ -7,6 +7,16 @@ import { generateMockData } from "@/lib/openai";
 import { recordGeneration } from "@/lib/storage";
 import { recordGenerationEvent, recordUserActivity } from "@/lib/events";
 import { checkDailyLimit, incrementDailyUsage } from "@/lib/daily-rate-limit";
+import {
+  checkUserInput,
+  isOffTopicSentinel,
+  validateOutputShape,
+} from "@/lib/prompt-security";
+import {
+  acquireSlot,
+  releaseSlot,
+  MAX_INFLIGHT_PER_IDENTITY,
+} from "@/lib/concurrency-limit";
 import { z } from "zod";
 
 /**
@@ -83,14 +93,13 @@ function extractRecordsFromResponse(response: string, format: string): string {
 
 // Validation schema for external API requests
 const externalGenerateSchema = z.object({
-  schema: z.string().min(1, "Schema is required"),
+  schema: z.string().min(1, "Schema is required").max(8192),
   schemaType: z.enum(["sql", "nosql"]).default("sql"),
   count: z.number().int().min(1).max(100).default(10),
   format: z.enum(["json", "csv", "sql", "xml", "html", "txt"]).default("json"),
-  examples: z.string().optional(),
-  additionalInstructions: z.string().optional(),
+  examples: z.string().max(4096).optional(),
   temperature: z.number().min(0).max(2).optional(),
-  maxTokens: z.number().int().min(100).max(100000).optional(),
+  maxTokens: z.number().int().min(100).max(8000).optional(),
 });
 
 export interface ExternalGenerateRequest {
@@ -99,7 +108,6 @@ export interface ExternalGenerateRequest {
   count: number;
   format: "json" | "csv" | "sql" | "xml" | "html" | "txt";
   examples?: string;
-  additionalInstructions?: string;
   temperature?: number;
   maxTokens?: number;
 }
@@ -145,10 +153,35 @@ async function handleGenerateRequest(
       count,
       format,
       examples,
-      additionalInstructions,
       temperature = 0.7,
-      maxTokens = 4000,
+      // P2-4: tighter default for the public endpoint. additionalInstructions
+      // is no longer accepted here, so 2000 is plenty for typical schemas.
+      maxTokens = 2000,
     } = validation.data;
+
+    // Pre-flight intent check on free-text fields (P1-3). additionalInstructions
+    // is intentionally not part of the public v1 contract.
+    const intent = checkUserInput({ schema, examples });
+    if (!intent.ok) {
+      const usage = await checkDailyLimit({
+        identifier: authContext.userId,
+        usesOwnApiKey: false,
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Request rejected: ${intent.field} contains ${intent.reason === "jailbreak_phrase" ? "a phrase that looks like a prompt-injection attempt" : "an off-topic request"}. This service only generates synthetic mock records.`,
+          field: intent.field,
+          reason: intent.reason,
+          usage: {
+            limit: usage.limit,
+            remaining: usage.remaining,
+            resetTimestamp: usage.resetTimestamp,
+          },
+        },
+        { status: 400 }
+      );
+    }
 
     // Check daily rate limit for the user
     const dailyLimitResult = await checkDailyLimit({
@@ -177,21 +210,60 @@ async function handleGenerateRequest(
       throw new Error("OpenAI API key not configured");
     }
 
-    // Generate mock data using the existing logic
-    const result = await generateMockData({
-      schema,
-      schemaType,
-      count,
-      format,
-      examples,
-      additionalInstructions,
-      apiKey: openaiApiKey || "",
-      model: process.env.OPENAI_API_DEFAULT_MODEL || "gpt-4o-mini",
-      baseUrl: process.env.OPENAI_API_BASE_URL,
-      temperature,
-      maxTokens,
-      headers: {},
-    });
+    // P2-3: per-API-key in-flight cap. Stops a holder of one API key from
+    // firing N parallel generations to drain the daily quota all at once.
+    const slot = await acquireSlot(`apikey:${authContext.userId}`);
+    if (!slot.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Too many concurrent generations. Limit is ${MAX_INFLIGHT_PER_IDENTITY} in-flight per API key.`,
+          reason: "concurrency_limit",
+        },
+        { status: 429 }
+      );
+    }
+
+    let result: string;
+    try {
+      result = await generateMockData({
+        schema,
+        schemaType,
+        count,
+        format,
+        examples,
+        apiKey: openaiApiKey || "",
+        model: process.env.OPENAI_API_DEFAULT_MODEL || "gpt-4o-mini",
+        baseUrl: process.env.OPENAI_API_BASE_URL,
+        temperature,
+        maxTokens,
+        headers: {},
+      });
+    } finally {
+      await releaseSlot(slot);
+    }
+
+    // Off-topic sentinel: model refused per system-prompt contract.
+    // Don't charge against quota; return 422.
+    if (isOffTopicSentinel(result)) {
+      const usage = await checkDailyLimit({
+        identifier: authContext.userId,
+        usesOwnApiKey: false,
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "The request was not recognised as a mock-data generation task and was refused.",
+          reason: "off_topic_refusal",
+          usage: {
+            limit: usage.limit,
+            remaining: usage.remaining,
+            resetTimestamp: usage.resetTimestamp,
+          },
+        },
+        { status: 422 }
+      );
+    }
 
     // Increment usage counter after successful generation
     await incrementDailyUsage(authContext.userId);
@@ -231,6 +303,30 @@ async function handleGenerateRequest(
 
     // Extract clean records from the AI response
     const cleanResult = extractRecordsFromResponse(result, format);
+
+    // Output shape validation (P1-5). For SQL we reject dangerous statements
+    // outright; for JSON/CSV, a parse failure is a soft warning surfaced in
+    // the response so callers can decide how to handle malformed output.
+    const shape = validateOutputShape(cleanResult, format);
+    if (!shape.ok && shape.reason === "sql_dangerous_statement") {
+      const usage = await checkDailyLimit({
+        identifier: authContext.userId,
+        usesOwnApiKey: false,
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Generated SQL contained disallowed statements (DROP/UPDATE/DELETE/ALTER/...). Refusing to return.",
+          reason: shape.reason,
+          usage: {
+            limit: usage.limit,
+            remaining: usage.remaining,
+            resetTimestamp: usage.resetTimestamp,
+          },
+        },
+        { status: 422 }
+      );
+    }
 
     // Return success response with updated usage info
     const updatedUsage = await checkDailyLimit({

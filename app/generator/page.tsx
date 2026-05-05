@@ -889,6 +889,26 @@ function GeneratorPageContent() {
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
+                  {session && (
+                    <Button
+                      variant="outline"
+                      size="default"
+                      onClick={() => setSaveDialogOpen(true)}
+                      disabled={
+                        isGenerating ||
+                        (schemaType !== "sample" && !schema.trim()) ||
+                        (schemaType === "sample" && !examples.trim())
+                      }
+                    >
+                      <Save className="mr-2 h-5 w-5" />
+                      {schemaName
+                        ? "Save Changes"
+                        : schemaType === "sample"
+                        ? "Save Examples"
+                        : "Save New Schema"
+                      }
+                    </Button>
+                  )}
                   {loadSavedAction}
                   <TemplatePicker
                     triggerLabel="Browse Templates"
@@ -952,27 +972,6 @@ function GeneratorPageContent() {
                   )}
                   {isGenerating ? "Generating..." : "Generate Mock Records"}
                 </Button>
-
-                {session && (
-                  <Button
-                    variant="outline"
-                    size="default"
-                    onClick={() => setSaveDialogOpen(true)}
-                    disabled={
-                      isGenerating ||
-                      (schemaType !== "sample" && !schema.trim()) ||
-                      (schemaType === "sample" && !examples.trim())
-                    }
-                  >
-                    <Save className="mr-2 h-5 w-5" />
-                    {schemaName
-                      ? "Save Changes"
-                      : schemaType === "sample"
-                      ? "Save Examples"
-                      : "Save New Schema"
-                    }
-                  </Button>
-                )}
               </div>
             </Card>
           </div>

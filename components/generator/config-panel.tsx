@@ -219,22 +219,47 @@ export function ConfigPanel({
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="temp-instructions">Additional Instructions (Optional)</Label>
-          <Textarea
-            id="temp-instructions"
-            placeholder="e.g., Generate records suitable for a financial institution. Use UUID for IDs."
-            className="resize-none h-28"
-            value={tempInstructions}
-            onChange={(e) => setTempInstructions(e.target.value)}
-            disabled={isGenerating}
-          />
-          {loadedInstructions && (
-            <p className="text-xs text-muted-foreground">
-              This schema was loaded with saved instructions that you can modify above.
-            </p>
-          )}
-        </div>
+        {(() => {
+          const instructionsEnabled = useUserSettings && !!userSettings?.apiKey;
+          let disabledNote: string | null = null;
+          if (!instructionsEnabled) {
+            if (!isSignedIn) {
+              disabledNote =
+                "Additional instructions are only available when generating with your own API key. Sign in and add a key in Settings to enable.";
+            } else if (!userSettings?.apiKey) {
+              disabledNote =
+                "Additional instructions are only available when generating with your own API key. Add a key in Settings to enable.";
+            } else {
+              disabledNote =
+                "Additional instructions are only available when generating with your own API key. Toggle “Use My API Key” below to enable.";
+            }
+          }
+          return (
+            <div className="space-y-2">
+              <Label htmlFor="temp-instructions">Additional Instructions (Optional)</Label>
+              <Textarea
+                id="temp-instructions"
+                placeholder={
+                  instructionsEnabled
+                    ? "e.g., Generate records suitable for a financial institution. Use UUID for IDs."
+                    : "Available when generating with your own API key."
+                }
+                className="resize-none h-28 [field-sizing:fixed]"
+                value={instructionsEnabled ? tempInstructions : ""}
+                onChange={(e) => setTempInstructions(e.target.value)}
+                disabled={isGenerating || !instructionsEnabled}
+              />
+              {disabledNote && (
+                <p className="text-xs text-muted-foreground">{disabledNote}</p>
+              )}
+              {instructionsEnabled && loadedInstructions && (
+                <p className="text-xs text-muted-foreground">
+                  This schema was loaded with saved instructions that you can modify above.
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {isSignedIn && (
           <div className="space-y-2 rounded-md border border-dashed p-4">
