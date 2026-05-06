@@ -20,6 +20,7 @@ import ResultsSkeleton from "@/components/ui/results-skeleton";
 import Skeleton from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
 import { friendlyGenerationError } from "@/lib/generator-errors";
+import { HardeningAlert } from "@/components/generator/hardening-alert";
 import { SaveSchemaDialog } from "@/components/generator/save-schema-dialog";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -227,6 +228,13 @@ function GeneratorPageContent() {
   );
   const [tempInstructions, setTempInstructions] = useState("");
 
+  // Inline alert for prompt-hardening rejections (shown above the Generate
+  // button; non-hardening errors continue to use toasts).
+  const [hardeningError, setHardeningError] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
+
   // Reference to DailyLimitInfo component
   const dailyLimitRef = useRef<{ refreshUsage: () => Promise<void> } | null>(
     null
@@ -408,6 +416,8 @@ function GeneratorPageContent() {
       setGenerationController(controller);
       setIsGenerating(true);
       setResults("");
+      // Clear any previous hardening alert when a new attempt starts.
+      setHardeningError(null);
       setProgressStep("parsing");
       setProgressPercent(8);
       setProgressMessage("Validating schema and configuration...");
@@ -568,31 +578,39 @@ function GeneratorPageContent() {
         if (!response.ok) {
           let errorMsg = `Error ${response.status}: ${response.statusText}`;
           let errorTitle = `Generation Failed (${response.status})`;
+          let errorKind: "hardening" | "limit" | "other" = "other";
 
           try {
             const errorData = await response.json();
             const friendly = friendlyGenerationError(response.status, errorData);
             errorTitle = friendly.title;
             errorMsg = friendly.description;
+            errorKind = friendly.kind;
           } catch (parseError) {
             console.error("Failed to parse error response:", parseError);
           }
 
-          toast({
-            title: errorTitle,
-            description: errorMsg,
-            variant: "destructive",
-            action:
-              status === "authenticated" ? (
-                <Button
-                  variant="link"
-                  className="text-sm underline"
-                  onClick={() => router.push("/dashboard/events")}
-                >
-                  View details in dashboard
-                </Button>
-              ) : undefined,
-          });
+          if (errorKind === "hardening") {
+            // Inline alert above the Generate button — keeps the user's
+            // attention on the field they need to edit.
+            setHardeningError({ title: errorTitle, description: errorMsg });
+          } else {
+            toast({
+              title: errorTitle,
+              description: errorMsg,
+              variant: "destructive",
+              action:
+                status === "authenticated" ? (
+                  <Button
+                    variant="link"
+                    className="text-sm underline"
+                    onClick={() => router.push("/dashboard/events")}
+                  >
+                    View details in dashboard
+                  </Button>
+                ) : undefined,
+            });
+          }
 
           throw new Error(errorMsg);
         }
@@ -960,6 +978,15 @@ function GeneratorPageContent() {
                   />
                 </div>
               </CardFooter>
+              {hardeningError && (
+                <div className="px-4 sm:px-6 pt-2">
+                  <HardeningAlert
+                    title={hardeningError.title}
+                    description={hardeningError.description}
+                    onDismiss={() => setHardeningError(null)}
+                  />
+                </div>
+              )}
               <div className="p-4 pt-4 pb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <Button
                   onClick={handleGenerate}
